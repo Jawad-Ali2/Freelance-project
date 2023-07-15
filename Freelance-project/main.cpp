@@ -6,7 +6,7 @@
 #include "buyer.h"
 #include "seller.h"
 
-
+//this is master
 using namespace std;
 
 
