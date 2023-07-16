@@ -130,12 +130,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="buyer.cpp" />
-    <ClCompile Include="Database.cpp" />
-    <ClCompile Include="loginUser.cpp" />
-    <ClCompile Include="registerUser.cpp" />
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="seller.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="buyer.h" />

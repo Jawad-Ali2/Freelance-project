@@ -47,14 +47,14 @@ int main() {
 				system("pause");
 			}
 			string role = login.getUserRole();
-			int sellerId = login.getSellerId();
+			int userId = login.getSellerId();
 			system("cls");
 			if (role == "Buyer") {
-				Buyer buyer;
+				Buyer buyer(database, username, role, userId);
 				buyer.displayBuyerDashboard();
 			}
 			else if (role == "Seller") {
-				Seller seller(database, username, role, sellerId);
+				Seller seller(database, username, role, userId);
 				seller.displaySellerDashboard();
 			}
 		}
