@@ -11,7 +11,7 @@ private:
 	int buyerId;
 	string role;
 	Database& database;
-	string username;
+	string username; 
 public:
 	Buyer(Database& db, const string& username, const string& role, const int& buyerId) : database(db) {
 		this->username = username;

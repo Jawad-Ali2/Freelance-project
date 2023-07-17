@@ -8,7 +8,7 @@ using namespace std;
 // database details
 const string DB_HOST = "tcp://127.0.0.1:3306";
 const string DB_USERNAME = "root";
-const string DB_PASSWORD = "jawadali123";
+const string DB_PASSWORD = "O5o6878238";
 const string DB_NAME = "freelance";
 
 // SQL queries

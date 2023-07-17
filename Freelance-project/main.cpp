@@ -5,7 +5,7 @@
 #include "login.h"
 #include "buyer.h"
 #include "seller.h"
-
+#include<conio.h>
 // this is for Z branch
 using namespace std;
 
@@ -17,15 +17,14 @@ int main() {
 
 
 	while (true) {
-		int choice;
+		char choice;
 		cout << "Welcome to Freelance Platform" << endl;
 		cout << "1. Register" << endl;
 		cout << "2. Login" << endl;
 		cout << "3. Exit" << endl;
 		cout << "Enter your choice: ";
-		cin >> choice;
-
-		if (choice == 1) {
+		choice = _getche();
+		if (choice == '1') {
 			system("cls");
 			// Register new user
 			registration.registerUser();
@@ -34,7 +33,7 @@ int main() {
 			system("pause");
 
 		}
-		else if (choice == 2) {
+		else if (choice == '2') {
 			// Login 
 			string username, password;
 
@@ -58,7 +57,7 @@ int main() {
 				seller.displaySellerDashboard();
 			}
 		}
-		else if (choice == 3)
+		else if (choice == '3')
 		{
 			exit(0);
 		}
