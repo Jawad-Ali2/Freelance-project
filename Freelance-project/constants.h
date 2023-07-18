@@ -14,6 +14,8 @@ const string DB_NAME = "freelance";
 // SQL queries
 const string GET_USERNAME_BY_ID = "SELECT username FROM users WHERE id = ?";
 const string GET_ID_BY_USERNAME = "SELECT id FROM users WHERE username = ?";
+const string GET_ORDER_ID = "SELECT order_id FROM orders WHERE post_id = ?";
+const string CURRENT_ORDER_STATUS = "SELECT order_status FROM orders WHERE post_id = ?";
 
 const string LOGIN_QUERY = "SELECT * FROM users WHERE username = ? AND password = ?";
 const string REGISTER_QUERY = "INSERT INTO users (username, email, password, role) VALUES (?, ?, ?, ?)";
@@ -25,6 +27,8 @@ const string GET_ORDER_POST_DETAILS = "SELECT * FROM posts WHERE post_id = ?";
 const string GET_SELLER_POSTS = "SELECT * FROM posts";
 const string INSERT_ORDER = "INSERT INTO orders (buyer_id, seller_id, post_id, order_status) VALUES (?, ?, ?, ?)";
 const string GET_ACTIVE_ORDERS_BUYER = "SELECT * FROM orders WHERE buyer_id = ?";
+const string UPDATE_ORDER_STATUS = "UPDATE orders SET order_status = ? WHERE post_id = ?";
+const string GET_COMPLETED_ORDERS = "SELECT post_id FROM orders WHERE order_status = ? AND seller_id = ?";
 
 // Validation for inputs
 const string VALIDATE_POST_ID = "SELECT post_id FROM posts WHERE post_id = ?";

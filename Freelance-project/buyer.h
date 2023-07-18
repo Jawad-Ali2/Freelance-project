@@ -60,7 +60,6 @@ public:
 
 				// Checking if the post is already in the active orders of the user or not
 				if (isPostInActiveOrders(postId)) {
-					cout << "Here" << endl;
 					continue;
 				}
 
@@ -70,11 +69,11 @@ public:
 				string description = res->getString("post_description");
 				string sellerName = getUsernameById(sellerId);
 
-				cout << "\n\n<--------- Post ID: " << postId << " --------->" << endl;
-				cout << "\n\tSeller Name: " << sellerName << endl;
-				cout << "\nTitle: " << title << endl;
-				cout << "\nDescriptions: \n\t" << description << endl;
-				cout << "-------------------------------------" << endl;
+				cout << "\n\n\t\t\t\t<--------- Post ID: " << postId << " --------->" << endl;
+				cout << "\n\t\t\t\tSeller Name: " << sellerName << endl;
+				cout << "\n\t\t\t\tTitle: " << title << endl;
+				cout << "\n\t\t\t\tDescriptions: \n\t\t\t\t" << description << endl;
+				cout << "\n\t\t\t\t-------------------------------------" << endl;
 
 				count++;
 
@@ -173,6 +172,8 @@ public:
 			sql::PreparedStatement* pstmt;
 			pstmt = database.prepareStatement(GET_ACTIVE_ORDERS_BUYER);
 			pstmt->setInt(1, buyerId);
+
+
 
 			sql::ResultSet* res;
 			res = pstmt->executeQuery();
@@ -283,11 +284,10 @@ public:
 	bool isPostInActiveOrders(int postId) {
 		try
 		{
-			cout << "here" << endl;
 			sql::PreparedStatement* pstmt = nullptr;
 			pstmt = database.prepareStatement(CHECK_POST_IN_ACTIVE_ORDERS);
-			pstmt->setInt(1, postId);
-			pstmt->setInt(2, buyerId);
+			pstmt->setInt(1, buyerId);
+			pstmt->setInt(2, postId);
 
 			sql::ResultSet* res;
 			res = pstmt->executeQuery();
@@ -297,14 +297,13 @@ public:
 
 			delete res;
 			delete pstmt;
-
 			return isInActiveOrders;
 		}
 		catch (sql::SQLException& e)
 		{
 			cout << "Failed to check if post is in the active orders. Error: " << e.what() << endl;
-			return false;
 		}
+		return false;
 	}
 };
 

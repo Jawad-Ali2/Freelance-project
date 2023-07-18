@@ -78,7 +78,6 @@ string Login::getUserRole() {
 
 		sql::PreparedStatement* pstmt = nullptr;
 		pstmt = database.prepareStatement(GET_USER_ROLE);
-		cout << loggedInUsername << endl;
 
 		//Set the username parameter
 		pstmt->setString(1, loggedInUsername);
