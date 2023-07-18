@@ -52,30 +52,71 @@ public:
 			sql::ResultSet* res;
 			res = pstmt->executeQuery();
 
+			int count = 0; // Counter to keep track of no of post displayed
+
 			// Display Posts
 			while (res->next()) {
 				int postId = res->getInt("post_id");
+
+				// Checking if the post is already in the active orders of the user or not
+				if (isPostInActiveOrders(postId)) {
+					cout << "Here" << endl;
+					continue;
+				}
+
+
 				int sellerId = res->getInt("seller_id");
 				string title = res->getString("post_title");
 				string description = res->getString("post_description");
 				string sellerName = getUsernameById(sellerId);
 
-				cout << "<--------- Post ID: " << postId << " --------->" << endl;
-				cout << "Seller Name: " << sellerName << endl;
-				cout << "Title: " << title << endl;
-				cout << "Descriptions: " << description << endl;
-				cout << "-------------" << endl;
+				cout << "\n\n<--------- Post ID: " << postId << " --------->" << endl;
+				cout << "\n\tSeller Name: " << sellerName << endl;
+				cout << "\nTitle: " << title << endl;
+				cout << "\nDescriptions: \n\t" << description << endl;
+				cout << "-------------------------------------" << endl;
+
+				count++;
+
+				// Checks if three post have been displayed on same line
+				if (count % 3 == 0) {
+					cout << endl;
+					cout << "Want to show more posts? (Enter to Continue or q to place order): ";
+					string input;
+					cin.ignore();
+					getline(cin, input);
+
+					if (input == "q") {
+						break;
+					}
+				}
 			}
 			delete res;
 			delete pstmt;
 
 			// Prompt for the user to select which service he would like to order
 			int selectedPostId;
-			cout << "Enter the ID of the post you want to order";
+			cout << "Enter the ID of the post you want to order: ";
 			cin >> selectedPostId;
 
-			// Placing order for the selected postId
-			placeOrder(selectedPostId);
+			// For Validation of the selectedPostID if it exists
+			sql::PreparedStatement* validateStmt = nullptr;
+			validateStmt = database.prepareStatement(VALIDATE_POST_ID);
+			validateStmt->setInt(1, selectedPostId);
+			sql::ResultSet* validateRes;
+			validateRes = validateStmt->executeQuery();
+
+			if (validateRes->next()) {
+				// If id exists, place order for the selected postId
+				placeOrder(selectedPostId);
+
+			}
+			else {
+				// Id does not exists, show error message
+				cout << "Invalid Post ID. Please Try Again." << endl;
+			}
+			delete validateRes;
+			delete validateStmt;
 
 		}
 		catch (sql::SQLException& e)
@@ -162,7 +203,7 @@ public:
 						cout << "Post Title: " << postTitle << endl;
 						cout << "Post Description: " << postDescription << endl;
 						cout << "Order Status: " << orderStatus << endl;
-						cout << "-------------------------------------" << endl;
+						cout << "-------------------------------------\n\n\n" << endl;
 					}
 					delete postRes;
 					delete postStmt;
@@ -237,6 +278,33 @@ public:
 			cout << "Failed to get User Name. Error: " << e.what() << endl;
 		}
 		return 404;
+	}
+
+	bool isPostInActiveOrders(int postId) {
+		try
+		{
+			cout << "here" << endl;
+			sql::PreparedStatement* pstmt = nullptr;
+			pstmt = database.prepareStatement(CHECK_POST_IN_ACTIVE_ORDERS);
+			pstmt->setInt(1, postId);
+			pstmt->setInt(2, buyerId);
+
+			sql::ResultSet* res;
+			res = pstmt->executeQuery();
+
+			//Checking if the query returns result
+			bool isInActiveOrders = res->next();
+
+			delete res;
+			delete pstmt;
+
+			return isInActiveOrders;
+		}
+		catch (sql::SQLException& e)
+		{
+			cout << "Failed to check if post is in the active orders. Error: " << e.what() << endl;
+			return false;
+		}
 	}
 };
 

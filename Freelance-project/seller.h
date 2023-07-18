@@ -59,7 +59,6 @@ void Seller::displaySellerDashboard() {
 
 void Seller::addPost(const int& sellerId) {
 
-	cout << role << " " << sellerId << endl;
 	string postTitle;
 	string postDescription;
 

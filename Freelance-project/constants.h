@@ -26,6 +26,10 @@ const string GET_SELLER_POSTS = "SELECT * FROM posts";
 const string INSERT_ORDER = "INSERT INTO orders (buyer_id, seller_id, post_id, order_status) VALUES (?, ?, ?, ?)";
 const string GET_ACTIVE_ORDERS_BUYER = "SELECT * FROM orders WHERE buyer_id = ?";
 
+// Validation for inputs
+const string VALIDATE_POST_ID = "SELECT post_id FROM posts WHERE post_id = ?";
+const string CHECK_POST_IN_ACTIVE_ORDERS = "SELECT * FROM orders WHERE buyer_id = ? AND post_id = ? AND order_status != 'completed'";
+
 // Error Messages
 const string ERROR_DB_CONNECTION = "Failed to connect to database";
 
