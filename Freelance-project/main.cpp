@@ -3,8 +3,8 @@
 #include "constants.h"
 #include "register.h"
 #include "login.h"
-#include "buyer.h"
-#include "seller.h"
+#include "client.h"
+#include "developer.h"
 
 // this is for Z branch
 using namespace std;
