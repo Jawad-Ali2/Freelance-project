@@ -20,11 +20,19 @@ public:
 	Seller(Database& db, const string& username, const string& role, const int& sellerId);
 	void displaySellerDashboard();
 	void addPost(const int& sellerId);
+	int countPosts();
 	void displayPosts();
+	int countActiveOrders();
 	void displayActiveOrders();
+	void rejectOrders();
+	int countCompletedOrders();
 	void displayCompletedOrders();
+	int countRejectedOrders();
+	void displayRejectedOrders();
 	string getUsernameById(int userId);
 	void changeOrderStatus(int postId);
+
+	void reset();
 };
 
 
@@ -42,9 +50,11 @@ void Seller::displaySellerDashboard() {
 		int choice;
 
 		cout << "1. Add Post" << endl;
-		cout << "2. Display all your post" << endl;
-		cout << "3. Show active orders" << endl;
-		cout << "4. Show completed orders" << endl;
+		cout << "2. Display all your post (" << countPosts() << ")" << endl;
+		cout << "3. Show active orders (" << countActiveOrders() << ")" << endl;
+		cout << "4. Show completed orders (" << countCompletedOrders() << ")" << endl;
+		cout << "5. Show rejected orders (" << countRejectedOrders() << ")" << endl;
+		cout << "6. Log out" << endl;
 		cin >> choice;
 
 		if (choice == 1) {
@@ -58,6 +68,18 @@ void Seller::displaySellerDashboard() {
 		}
 		else if (choice == 4) {
 			displayCompletedOrders();
+		}
+		else if (choice == 5) {
+			displayRejectedOrders();
+		}
+		else if (choice == 6) {
+			reset();
+			system("cls");
+			cout << "\n\n\n\t\t\t\t\tLogged Out Successfully!" << endl;
+
+			cout << "\n\n\n\t\t\t\tGoing back to the main screen" << endl;
+			system("pause");
+			return;
 		}
 		else {
 			cout << "Invalid input!" << endl;
@@ -95,6 +117,37 @@ void Seller::addPost(const int& sellerId) {
 		cout << "Failed to create post. Error: " << e.what() << endl;
 	}
 
+}
+
+int Seller::countPosts() {
+	int postsCount = 0;
+	try
+	{
+		sql::PreparedStatement* pstmt;
+		// Get all the posts
+		pstmt = database.prepareStatement(GET_ALL_POSTS);
+		pstmt->setInt(1, sellerId); // of the seller with id
+
+		sql::ResultSet* res;
+		res = pstmt->executeQuery();
+		if (res->next()) {
+			while (res->next()) {
+				int postId = res->getInt("post_id");
+				string postTitle = res->getString("post_title");
+				string postDesc = res->getString("post_description");
+
+				postsCount++;
+			}
+
+			delete res;
+			delete pstmt;
+			return postsCount;
+		}
+	}
+	catch (sql::SQLException& e)
+	{
+		cout << "Failed to fetch posts. Error: " << e.what() << endl;
+	}
 }
 
 void Seller::displayPosts() {
@@ -138,7 +191,67 @@ void Seller::displayPosts() {
 	}
 }
 
+int Seller::countActiveOrders() {
+
+	// Get the count of active orders
+	int activeOrders = 0;
+	try
+	{
+		sql::PreparedStatement* pstmt;
+		// Get Active_orders from the database based on the id
+		pstmt = database.prepareStatement(GET_ACTIVE_ORDERS_SELLER);
+		pstmt->setInt(1, sellerId); // Provides the id of the user
+
+		sql::ResultSet* res;
+		res = pstmt->executeQuery();
+
+		if (res->next()) {
+
+			while (res->next()) {
+				int orderId = res->getInt("order_id");
+				int buyerId = res->getInt("buyer_id");
+				int postId = res->getInt("post_id");
+				// If the order status is 'Completed' we move that post to completed orders
+				string orderStatus = res->getString("order_status");
+				string buyerName = getUsernameById(buyerId);
+
+
+				// Skips the post which has status completed
+				if (orderStatus == "Completed" || orderStatus == "Rejected") {
+					//displayCompletedOrders();
+					continue;
+				}
+
+				// Fetch  Post details
+				sql::PreparedStatement* postStmt = database.prepareStatement(GET_ORDER_POST_DETAILS);
+				postStmt->setInt(1, postId);
+				sql::ResultSet* postRes = postStmt->executeQuery();
+
+				if (postRes->next()) {
+					string postTitle = postRes->getString("post_title");
+					string postDescription = postRes->getString("post_description");
+
+					activeOrders++;
+				}
+				delete postRes;
+				delete postStmt;
+
+			}
+		}
+		delete res;
+		delete pstmt;
+
+		return activeOrders;
+	}
+	catch (sql::SQLException& e)
+	{
+		cout << "Couldn't get active orders. Error: " << e.what() << endl;
+		return 404;
+	}
+}
+
 void Seller::displayActiveOrders() {
+	int activeOrders = 0;
 	char choice;
 	int postId;
 	try
@@ -164,8 +277,8 @@ void Seller::displayActiveOrders() {
 
 
 				// Skips the post which has status completed
-				if (orderStatus == "Completed") {
-					displayCompletedOrders();
+				if (orderStatus == "Completed" || orderStatus == "Rejected") {
+					//displayCompletedOrders();
 					continue;
 				}
 
@@ -178,35 +291,38 @@ void Seller::displayActiveOrders() {
 					string postTitle = postRes->getString("post_title");
 					string postDescription = postRes->getString("post_description");
 
-					/*cout << "Order ID: " << orderId << endl;
-					cout << "Buyer ID: " << buyerId << endl;*/
+					//cout << "Buyer ID: " << buyerId << endl;
+					cout << "Order ID: " << orderId << endl;
 					cout << "Buyer: " << buyerName << endl;
 					cout << "Post ID: " << postId << endl;
 					cout << "Post Title: \n" << postTitle << endl;
 					cout << "Post Description: \n" << postDescription << endl;
 					cout << "Order Status: " << orderStatus << endl;
 					cout << "-----------------------------------------" << endl;
-
 				}
 				delete postRes;
 				delete postStmt;
 
 			}
-			// If user wants to change the status of the active order
-			cout << "1. Do you want to change the status of Active Order?\n"
-				"2. Do you want to reject pending order?\n"
-				"3. Go back to main menu\n";
-			cout << "Enter your choice: "; cin >> choice;
-			if (choice == '1') {
-				cout << "Enter the Post Id: "; cin >> postId;
-				changeOrderStatus(postId);
-			}
-			else if (choice == '2') {
-				cout << "Enter the Post Id: "; cin >> postId;
-
+			if (activeOrders == 0) {
+				cout << "No active order found. Engage your client by showing them your skills" << endl;
 			}
 			else {
-				displaySellerDashboard();
+				// If user wants to change the status of the active order
+				cout << "1. Do you want to change the status of Active Order?\n"
+					"2. Do you want to reject pending order?\n"
+					"3. Go back to main menu\n";
+				cout << "Enter your choice: "; cin >> choice;
+				if (choice == '1') {
+					cout << "Enter the Post Id: "; cin >> postId;
+					changeOrderStatus(postId);
+				}
+				else if (choice == '2') {
+					rejectOrders();
+				}
+				else {
+					displaySellerDashboard();
+				}
 			}
 		}
 		else {
@@ -221,8 +337,91 @@ void Seller::displayActiveOrders() {
 	}
 }
 
-void Seller::displayCompletedOrders() {
+void Seller::rejectOrders() {
+	int order_Id;
+	cout << "Enter the Pending Order ID you want to reject: "; cin >> order_Id;
+	try
+	{
+		sql::PreparedStatement* pstmt = nullptr;
+		pstmt = database.prepareStatement(GET_ACTIVE_ORDERS_SELLER);
+		pstmt->setInt(1, sellerId);
+
+		sql::ResultSet* res;
+		res = pstmt->executeQuery();
+
+		while (res->next()) {
+			string orderStatus = res->getString("order_status");
+			int orderId = res->getInt("order_id");
+			int postId = res->getInt("post_id");
+			int buyerId = res->getInt("buyer_id");
+
+			string buyerName = getUsernameById(buyerId);
+
+
+			if (order_Id == orderId && orderStatus == "Placed") {
+				// Display that post here if order status is placed:
+				if (orderStatus != "Placed") {
+					cout << "You can only reject Pending orders!" << endl;
+					system("pause");
+					displaySellerDashboard();
+				}
+
+				// Fetch  Post details
+				sql::PreparedStatement* postStmt = database.prepareStatement(GET_ORDER_POST_DETAILS);
+				postStmt->setInt(1, postId);
+				sql::ResultSet* postRes = postStmt->executeQuery();
+
+				if (postRes->next()) {
+					string postTitle = postRes->getString("post_title");
+					string postDescription = postRes->getString("post_description");
+
+					//cout << "Buyer ID: " << buyerId << endl;
+					cout << "\n\nOrder ID: " << orderId << endl;
+					cout << "Buyer: " << buyerName << endl;
+					cout << "Post ID: " << postId << endl;
+					cout << "Post Title: \n" << postTitle << endl;
+					cout << "Post Description: \n" << postDescription << endl;
+					cout << "Order Status: " << orderStatus << endl;
+					cout << "-----------------------------------------" << endl;
+
+				}
+				delete postRes;
+				delete postStmt;
+
+				char choice;
+				cout << "Do you wish to reject this order? (y/n) "; cin >> choice;
+
+				if (choice == 'y') {
+					string updateStatus = "Rejected";
+					sql::PreparedStatement* deleteStmt = nullptr;
+					deleteStmt = database.prepareStatement(UPDATE_ORDER_STATUS);
+					deleteStmt->setString(1, updateStatus);
+					deleteStmt->setInt(2, postId);
+					deleteStmt->executeUpdate();
+
+					delete deleteStmt;
+					cout << "Order Successfully Rejected." << endl;
+
+					break;
+				}
+			}
+		}
+
+		delete res;
+		delete pstmt;
+
+	}
+	catch (sql::SQLException& e)
+	{
+		cout << "Could not reject the order. Error: " << e.what() << endl;
+	}
+}
+
+int Seller::countCompletedOrders() {
+	int completedOrders = 0;
+
 	string orderStatus;
+	int orderId;
 	int buyerId;
 	string buyerName;
 	int postId;
@@ -236,51 +435,126 @@ void Seller::displayCompletedOrders() {
 		sql::ResultSet* preRes;
 		preRes = preStmt->executeQuery();
 
-		if (preRes->next()) {
+		while (preRes->next()) {
+			orderId = preRes->getInt("order_id");
 			orderStatus = preRes->getString("order_status");
 			buyerId = preRes->getInt("buyer_id");
 			buyerName = getUsernameById(buyerId);
 
-			delete preRes;
-			delete preStmt;
+			// Skips the post which does not have status of completed
+			if (orderStatus != "Completed") {
+				continue;
+			}
+			// Then we get post id of the status that are completed
+			sql::PreparedStatement* pstmt = nullptr;
+			pstmt = database.prepareStatement(GET_COMPLETED_ORDERS_SELLER);
+			pstmt->setString(1, orderStatus);
+			pstmt->setInt(2, sellerId);
+
+			sql::ResultSet* res;
+			res = pstmt->executeQuery();
+
+			if (res->next()) {
+				postId = res->getInt("post_id");
+
+				delete res;
+				delete pstmt;
+			}
+
+			// Fetch  Post details
+			sql::PreparedStatement* postStmt = database.prepareStatement(GET_ORDER_POST_DETAILS);
+			postStmt->setInt(1, postId);
+			sql::ResultSet* postRes = postStmt->executeQuery();
+
+
+			if (postRes->next()) {
+				string postTitle = postRes->getString("post_title");
+				string postDescription = postRes->getString("post_description");
+
+				completedOrders++;
+
+			}
+			delete postRes;
+			delete postStmt;
 		}
+		delete preRes;
+		delete preStmt;
 
-		// Then we get post id of the status that are completed
-		sql::PreparedStatement* pstmt = nullptr;
-		pstmt = database.prepareStatement(GET_COMPLETED_ORDERS);
-		pstmt->setString(1, orderStatus);
-		pstmt->setInt(2, sellerId);
+		return completedOrders;
+	}
+	catch (sql::SQLException& e)
+	{
+		cout << "Could not get completed orders. Error:" << e.what() << endl;
+		return 404;
+	}
+}
 
-		sql::ResultSet* res;
-		res = pstmt->executeQuery();
+void Seller::displayCompletedOrders() {
+	string orderStatus;
+	int orderId;
+	int buyerId;
+	string buyerName;
+	int postId;
+	try
+	{
+		// First we get order status and buyer name from this query
+		sql::PreparedStatement* preStmt = nullptr;
+		preStmt = database.prepareStatement(GET_ACTIVE_ORDERS_SELLER);
+		preStmt->setInt(1, sellerId);
 
-		if (res->next()) {
-			postId = res->getInt("post_id");
+		sql::ResultSet* preRes;
+		preRes = preStmt->executeQuery();
 
-			delete res;
-			delete pstmt;
+		while (preRes->next()) {
+			orderId = preRes->getInt("order_id");
+			orderStatus = preRes->getString("order_status");
+			buyerId = preRes->getInt("buyer_id");
+			buyerName = getUsernameById(buyerId);
+
+			// Skips the post which does not have status of completed
+			if (orderStatus != "Completed") {
+				continue;
+			}
+			// Then we get post id of the status that are completed
+			sql::PreparedStatement* pstmt = nullptr;
+			pstmt = database.prepareStatement(GET_COMPLETED_ORDERS_SELLER);
+			pstmt->setString(1, orderStatus);
+			pstmt->setInt(2, sellerId);
+
+			sql::ResultSet* res;
+			res = pstmt->executeQuery();
+
+			if (res->next()) {
+				postId = res->getInt("post_id");
+
+				delete res;
+				delete pstmt;
+			}
+
+			// Fetch  Post details
+			sql::PreparedStatement* postStmt = database.prepareStatement(GET_ORDER_POST_DETAILS);
+			postStmt->setInt(1, postId);
+			sql::ResultSet* postRes = postStmt->executeQuery();
+
+
+			if (postRes->next()) {
+				string postTitle = postRes->getString("post_title");
+				string postDescription = postRes->getString("post_description");
+
+				cout << "\n\nOrder ID: " << orderId << endl;
+				cout << "Buyer: " << buyerName << endl;
+				cout << "Post ID: " << postId << endl;
+				cout << "Post Title: \n" << postTitle << endl;
+				cout << "Post Description: \n" << postDescription << endl;
+				cout << "Order Status: " << orderStatus << endl;
+				cout << "-----------------------------------------" << endl;
+
+			}
+			delete postRes;
+			delete postStmt;
 		}
-
-		// Fetch  Post details
-		sql::PreparedStatement* postStmt = database.prepareStatement(GET_ORDER_POST_DETAILS);
-		postStmt->setInt(1, postId);
-		sql::ResultSet* postRes = postStmt->executeQuery();
-
-
-		if (postRes->next()) {
-			string postTitle = postRes->getString("post_title");
-			string postDescription = postRes->getString("post_description");
-
-			cout << "Buyer: " << buyerName << endl;
-			cout << "Post ID: " << postId << endl;
-			cout << "Post Title: \n" << postTitle << endl;
-			cout << "Post Description: \n" << postDescription << endl;
-			cout << "Order Status: " << orderStatus << endl;
-			cout << "-----------------------------------------" << endl;
-
-		}
-		delete postRes;
-		delete postStmt;
+		delete preRes;
+		delete preStmt;
 
 	}
 	catch (sql::SQLException& e)
@@ -288,6 +562,152 @@ void Seller::displayCompletedOrders() {
 		cout << "Could not get active orders. Error:" << e.what() << endl;
 	}
 
+}
+
+
+
+int Seller::countRejectedOrders() {
+	int rejectedOrders = 0;
+
+	string orderStatus;
+	int orderId;
+	int buyerId;
+	string buyerName;
+	int postId;
+	try
+	{
+		// First we get order status and buyer name from this query
+		sql::PreparedStatement* preStmt = nullptr;
+		preStmt = database.prepareStatement(GET_ACTIVE_ORDERS_SELLER);
+		preStmt->setInt(1, sellerId);
+
+		sql::ResultSet* preRes;
+		preRes = preStmt->executeQuery();
+
+		while (preRes->next()) {
+			orderId = preRes->getInt("order_id");
+			orderStatus = preRes->getString("order_status");
+			buyerId = preRes->getInt("buyer_id");
+			buyerName = getUsernameById(buyerId);
+
+			// Skips the post which does not have status of rejected
+			if (orderStatus != "Rejected") {
+				continue;
+			}
+			// Then we get post id of the status that are completed
+			sql::PreparedStatement* pstmt = nullptr;
+			pstmt = database.prepareStatement(GET_COMPLETED_ORDERS_SELLER);
+			pstmt->setString(1, orderStatus);
+			pstmt->setInt(2, sellerId);
+
+			sql::ResultSet* res;
+			res = pstmt->executeQuery();
+
+			if (res->next()) {
+				postId = res->getInt("post_id");
+
+				delete res;
+				delete pstmt;
+			}
+
+			// Fetch  Post details
+			sql::PreparedStatement* postStmt = database.prepareStatement(GET_ORDER_POST_DETAILS);
+			postStmt->setInt(1, postId);
+			sql::ResultSet* postRes = postStmt->executeQuery();
+
+
+			if (postRes->next()) {
+				string postTitle = postRes->getString("post_title");
+				string postDescription = postRes->getString("post_description");
+
+				rejectedOrders++;
+			}
+			delete postRes;
+			delete postStmt;
+		}
+		delete preRes;
+		delete preStmt;
+		return rejectedOrders;
+	}
+	catch (sql::SQLException& e)
+	{
+		cout << "Could not get active orders. Error:" << e.what() << endl;
+		return 404;
+	}
+}
+
+void Seller::displayRejectedOrders() {
+	string orderStatus;
+	int orderId;
+	int buyerId;
+	string buyerName;
+	int postId;
+	try
+	{
+		// First we get order status and buyer name from this query
+		sql::PreparedStatement* preStmt = nullptr;
+		preStmt = database.prepareStatement(GET_ACTIVE_ORDERS_SELLER);
+		preStmt->setInt(1, sellerId);
+
+		sql::ResultSet* preRes;
+		preRes = preStmt->executeQuery();
+
+		while (preRes->next()) {
+			orderId = preRes->getInt("order_id");
+			orderStatus = preRes->getString("order_status");
+			buyerId = preRes->getInt("buyer_id");
+			buyerName = getUsernameById(buyerId);
+
+			// Skips the post which does not have status of rejected
+			if (orderStatus != "Rejected") {
+				continue;
+			}
+			// Then we get post id of the status that are completed
+			sql::PreparedStatement* pstmt = nullptr;
+			pstmt = database.prepareStatement(GET_COMPLETED_ORDERS_SELLER);
+			pstmt->setString(1, orderStatus);
+			pstmt->setInt(2, sellerId);
+
+			sql::ResultSet* res;
+			res = pstmt->executeQuery();
+
+			if (res->next()) {
+				postId = res->getInt("post_id");
+
+				delete res;
+				delete pstmt;
+			}
+
+			// Fetch  Post details
+			sql::PreparedStatement* postStmt = database.prepareStatement(GET_ORDER_POST_DETAILS);
+			postStmt->setInt(1, postId);
+			sql::ResultSet* postRes = postStmt->executeQuery();
+
+
+			if (postRes->next()) {
+				string postTitle = postRes->getString("post_title");
+				string postDescription = postRes->getString("post_description");
+
+				cout << "\n\nOrder ID: " << orderId << endl;
+				cout << "Buyer: " << buyerName << endl;
+				cout << "Post ID: " << postId << endl;
+				cout << "Post Title: \n" << postTitle << endl;
+				cout << "Post Description: \n" << postDescription << endl;
+				cout << "Order Status: " << orderStatus << endl;
+				cout << "-----------------------------------------" << endl;
+
+			}
+			delete postRes;
+			delete postStmt;
+		}
+		delete preRes;
+		delete preStmt;
+
+	}
+	catch (sql::SQLException& e)
+	{
+		cout << "Could not get active orders. Error:" << e.what() << endl;
+	}
 }
 
 string Seller::getUsernameById(int userId) {
@@ -406,8 +826,12 @@ void Seller::changeOrderStatus(int postId) {
 		cout << "Could not update order status. Error: " << e.what() << endl;
 	}
 
+}
 
-
+void Seller::reset() {
+	int sellerId = 0;
+	string role = "";
+	string username = "";
 }
 
 #endif

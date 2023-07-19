@@ -17,7 +17,6 @@ public:
 	~Database();
 
 	bool connect(const string& host, const string& user, const string& password, const string& database);
-	void setSchema(const std::string& schema);
 	sql::PreparedStatement* prepareStatement(const std::string& query);
 	void close();
 };
@@ -28,17 +27,12 @@ Database::Database(const string& host, const string& user, const string& passwor
 
 
 	connection = driver->connect(host, user, password);
-	setSchema(database);
+	connection->setSchema(database);
 }
 
 Database:: ~Database() {
 	// Close the connection before destroying the object
 	delete connection;
-}
-
-void Database::setSchema(const std::string& schema) {
-	string currentSchema = schema;
-	connection->setSchema(schema);
 }
 
 sql::PreparedStatement* Database::prepareStatement(const string& query) {

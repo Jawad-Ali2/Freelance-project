@@ -17,6 +17,8 @@ int main() {
 
 
 	while (true) {
+		system("cls");
+
 		int choice;
 		cout << "Welcome to Freelance Platform" << endl;
 		cout << "1. Register" << endl;
@@ -49,6 +51,8 @@ int main() {
 			string role = login.getUserRole();
 			int userId = login.getSellerId();
 			system("cls");
+			cout << role << endl;
+			cout << userId << endl;
 			if (role == "Buyer") {
 				Buyer buyer(database, username, role, userId);
 				buyer.displayBuyerDashboard();
