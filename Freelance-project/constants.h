@@ -33,6 +33,10 @@ const string GET_REJECTED_ORDERS = "SELECT post_id FROM orders WHERE order_statu
 
 const string UPDATE_ORDER_STATUS = "UPDATE orders SET order_status = ? WHERE post_id = ?";
 //const string UPDATE_POST_REJECTION_FROM_ORDERS = "UPDATE orders SET order_status = ? WHERE buyer_id = ? AND post_id = ?";
+const string DELETE_REJECTED_ORDERS = "DELETE FROM orders WHERE order_id = ? AND order_status = 'Rejected'";
+const string DELETE_ALL_POSTS = "DELETE FROM posts where seller_id = ?";
+const string DELETE_ONE_POST = "DELETE FROM posts WHERE seller_id=? AND post_id=?";
+const string DELETE_POST_FROM_ORDERS = "DELETE FROM orders WHERE seller_id=? AND post_id=?";
 
 // Validation for inputs
 const string VALIDATE_POST_ID = "SELECT post_id FROM posts WHERE post_id = ?";

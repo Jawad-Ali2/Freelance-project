@@ -31,6 +31,7 @@ public:
 	void displayRejectedOrders();
 	string getUsernameById(int userId);
 	void changeOrderStatus(int postId);
+	void deletePosts(const int& sellerId);
 
 	void reset();
 };
@@ -179,6 +180,25 @@ void Seller::displayPosts() {
 			delete res;
 			delete pstmt;
 
+			char choice;
+			cout << "1. Do you want to delete post? (y/n)\n"
+				"2. Go Back\n"
+				"Enter your choice: ";
+			cin >> choice;
+
+			if (choice == '1') {
+				deletePosts(sellerId);
+			}
+			else if (choice == '2') {
+				system("cls");
+				return;
+			}
+			else {
+				cout << "Invalid input! Returning to main screen" << endl;
+				system("pause");
+				return;
+			}
+
 		}
 		else
 		{
@@ -207,7 +227,7 @@ int Seller::countActiveOrders() {
 
 		if (res->next()) {
 
-			while (res->next()) {
+			do {
 				int orderId = res->getInt("order_id");
 				int buyerId = res->getInt("buyer_id");
 				int postId = res->getInt("post_id");
@@ -236,7 +256,7 @@ int Seller::countActiveOrders() {
 				delete postRes;
 				delete postStmt;
 
-			}
+			} while (res->next());;
 		}
 		delete res;
 		delete pstmt;
@@ -251,7 +271,6 @@ int Seller::countActiveOrders() {
 }
 
 void Seller::displayActiveOrders() {
-	int activeOrders = 0;
 	char choice;
 	int postId;
 	try
@@ -267,10 +286,11 @@ void Seller::displayActiveOrders() {
 		if (res->next()) {
 			cout << "Active Orders" << endl;
 
-			while (res->next()) {
+			do {
 				int orderId = res->getInt("order_id");
 				int buyerId = res->getInt("buyer_id");
 				int postId = res->getInt("post_id");
+
 				// If the order status is 'Completed' we move that post to completed orders
 				string orderStatus = res->getString("order_status");
 				string buyerName = getUsernameById(buyerId);
@@ -303,27 +323,23 @@ void Seller::displayActiveOrders() {
 				delete postRes;
 				delete postStmt;
 
+			} while (res->next());
+			// If user wants to change the status of the active order
+			cout << "1. Do you want to change the status of Active Order?\n"
+				"2. Do you want to reject pending order?\n"
+				"3. Go back to main menu\n";
+			cout << "Enter your choice: "; cin >> choice;
+			if (choice == '1') {
+				cout << "Enter the Post Id: "; cin >> postId;
+				changeOrderStatus(postId);
 			}
-			if (activeOrders == 0) {
-				cout << "No active order found. Engage your client by showing them your skills" << endl;
+			else if (choice == '2') {
+				rejectOrders();
 			}
 			else {
-				// If user wants to change the status of the active order
-				cout << "1. Do you want to change the status of Active Order?\n"
-					"2. Do you want to reject pending order?\n"
-					"3. Go back to main menu\n";
-				cout << "Enter your choice: "; cin >> choice;
-				if (choice == '1') {
-					cout << "Enter the Post Id: "; cin >> postId;
-					changeOrderStatus(postId);
-				}
-				else if (choice == '2') {
-					rejectOrders();
-				}
-				else {
-					displaySellerDashboard();
-				}
+				displaySellerDashboard();
 			}
+
 		}
 		else {
 			cout << "No active order found. Engage your client by showing them your skills" << endl;
@@ -812,7 +828,7 @@ void Seller::changeOrderStatus(int postId) {
 
 			delete updateStmt;
 
-			cout << "Order Status Updated Successfully.";
+			cout << "Order Status Updated Successfully." << endl;
 		}
 		else {
 			cout << "Action altered, returning back to the main menu" << endl;
@@ -826,6 +842,56 @@ void Seller::changeOrderStatus(int postId) {
 		cout << "Could not update order status. Error: " << e.what() << endl;
 	}
 
+}
+
+// Done by Noraiz
+
+void Seller::deletePosts(const int& sellerId) {
+	char choice;
+
+	cout << "1. Delete one post\n"
+		"2. Return To main menu\n"
+		"Enter you choice: ";
+	cin >> choice;
+
+	if (choice == '1') {
+		try {
+			string postId;
+			cout << "NOTE: You may lose the orders if any on current post you may select." << endl;
+			cout << "Enter the Post ID Which you want to delete: ";
+			cin >> postId;
+
+			// First delete that post from posts table
+			sql::PreparedStatement* pstmt = nullptr;
+			pstmt = database.prepareStatement(DELETE_POST_FROM_ORDERS);
+			pstmt->setInt(1, sellerId);
+			pstmt->setString(2, postId);
+
+			pstmt->executeUpdate();
+			delete pstmt;
+
+			// Then delete that post from orders table too
+			pstmt = database.prepareStatement(DELETE_ONE_POST);
+			pstmt->setInt(1, sellerId);
+			pstmt->setString(2, postId);
+
+			pstmt->executeUpdate();
+			delete pstmt;
+
+
+			cout << "Post deleted successfully" << endl;
+		}
+		catch (sql::SQLException& e)
+		{
+			cout << "Failed to delete post. Error: " << e.what() << endl;
+		}
+
+	}
+	else {
+		cout << "Invalid Input. Returning to main menu";
+		system("cls");
+		deletePosts(sellerId);
+	}
 }
 
 void Seller::reset() {

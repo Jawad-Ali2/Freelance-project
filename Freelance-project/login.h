@@ -23,8 +23,6 @@ public:
 	int getSellerId();
 };
 
-
-
 Login::Login(Database& db) : database(db) {};
 
 bool Login::loginUser(const string& username, const string& password) {

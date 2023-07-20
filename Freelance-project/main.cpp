@@ -11,13 +11,14 @@ using namespace std;
 
 
 int main() {
+	bool isLoggedIn = false;
 	Database database(DB_HOST, DB_USERNAME, DB_PASSWORD, DB_NAME);
 	Registration registration(database);
 	Login login(database);
 
 
 	while (true) {
-		system("cls");
+		//system("cls");
 
 		int choice;
 		cout << "Welcome to Freelance Platform" << endl;
@@ -50,14 +51,16 @@ int main() {
 			}
 			string role = login.getUserRole();
 			int userId = login.getSellerId();
-			system("cls");
-			cout << role << endl;
-			cout << userId << endl;
-			if (role == "Buyer") {
+
+			if (userId) {
+				isLoggedIn = true;
+			}
+
+			if (role == "Buyer" && isLoggedIn) {
 				Buyer buyer(database, username, role, userId);
 				buyer.displayBuyerDashboard();
 			}
-			else if (role == "Seller") {
+			else if (role == "Seller" && isLoggedIn) {
 				Seller seller(database, username, role, userId);
 				seller.displaySellerDashboard();
 			}
