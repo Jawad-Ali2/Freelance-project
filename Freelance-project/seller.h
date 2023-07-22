@@ -93,9 +93,15 @@ void Seller::addPost(const int& sellerId) {
 
 	string postTitle;
 	string postDescription;
+	string category;
+	float price = 0.00;
 
 	cin.ignore();
 	cout << "Add Post" << endl;
+	cout << "Enter Post Category: (i.e. Website, Content-Writing etc.): ";
+	getline(cin, category);
+	cout << "Price: ";cin >> price;
+	cin.ignore();
 	cout << "Post Title: ";
 	getline(cin, postTitle);
 	cout << "Post Description: ";
@@ -108,6 +114,8 @@ void Seller::addPost(const int& sellerId) {
 		pstmt->setInt(1, sellerId);
 		pstmt->setString(2, postTitle);
 		pstmt->setString(3, postDescription);
+		pstmt->setString(4, category);
+		pstmt->setDouble(5, price);
 
 		pstmt->execute();
 
@@ -168,9 +176,13 @@ void Seller::displayPosts() {
 				int postId = res->getInt("post_id");
 				string postTitle = res->getString("post_title");
 				string postDesc = res->getString("post_description");
+				string postCat = res->getString("category");
+				float postPrice = res->getDouble("price");
 
 
 				cout << "Post ID: " << postId << endl;
+				cout << "Price: " << postPrice << endl;
+				cout << "Category: " << postCat << endl;
 				cout << "Title: " << postTitle << endl;
 				cout << "Description: " << postDesc << endl;
 				cout << "-----------------------------------------" << endl;
@@ -250,6 +262,7 @@ int Seller::countActiveOrders() {
 				if (postRes->next()) {
 					string postTitle = postRes->getString("post_title");
 					string postDescription = postRes->getString("post_description");
+					string postCat = postRes->getString("category");
 
 					activeOrders++;
 				}
@@ -310,11 +323,14 @@ void Seller::displayActiveOrders() {
 				if (postRes->next()) {
 					string postTitle = postRes->getString("post_title");
 					string postDescription = postRes->getString("post_description");
+					string postCat = postRes->getString("category");
+					float postPrice = postRes->getDouble("price");
 
-					//cout << "Buyer ID: " << buyerId << endl;
 					cout << "Order ID: " << orderId << endl;
 					cout << "Buyer: " << buyerName << endl;
 					cout << "Post ID: " << postId << endl;
+					cout << "Price: " << postPrice << endl;
+					cout << "Category: " << postCat << endl;
 					cout << "Post Title: \n" << postTitle << endl;
 					cout << "Post Description: \n" << postDescription << endl;
 					cout << "Order Status: " << orderStatus << endl;
@@ -390,11 +406,16 @@ void Seller::rejectOrders() {
 				if (postRes->next()) {
 					string postTitle = postRes->getString("post_title");
 					string postDescription = postRes->getString("post_description");
+					string postCat = res->getString("category");
+					float postPrice = res->getDouble("price");
+
 
 					//cout << "Buyer ID: " << buyerId << endl;
 					cout << "\n\nOrder ID: " << orderId << endl;
 					cout << "Buyer: " << buyerName << endl;
 					cout << "Post ID: " << postId << endl;
+					cout << "Price: " << postPrice << endl;
+					cout << "Category: " << postCat << endl;
 					cout << "Post Title: \n" << postTitle << endl;
 					cout << "Post Description: \n" << postDescription << endl;
 					cout << "Order Status: " << orderStatus << endl;
@@ -409,13 +430,13 @@ void Seller::rejectOrders() {
 
 				if (choice == 'y') {
 					string updateStatus = "Rejected";
-					sql::PreparedStatement* deleteStmt = nullptr;
-					deleteStmt = database.prepareStatement(UPDATE_ORDER_STATUS);
-					deleteStmt->setString(1, updateStatus);
-					deleteStmt->setInt(2, postId);
-					deleteStmt->executeUpdate();
+					sql::PreparedStatement* rejStmt = nullptr;
+					rejStmt = database.prepareStatement(UPDATE_ORDER_STATUS);
+					rejStmt->setString(1, updateStatus);
+					rejStmt->setInt(2, postId);
+					rejStmt->executeUpdate();
 
-					delete deleteStmt;
+					delete rejStmt;
 					cout << "Order Successfully Rejected." << endl;
 
 					break;
@@ -486,6 +507,7 @@ int Seller::countCompletedOrders() {
 			if (postRes->next()) {
 				string postTitle = postRes->getString("post_title");
 				string postDescription = postRes->getString("post_description");
+				string postCat = postRes->getString("category");
 
 				completedOrders++;
 
@@ -556,10 +578,14 @@ void Seller::displayCompletedOrders() {
 			if (postRes->next()) {
 				string postTitle = postRes->getString("post_title");
 				string postDescription = postRes->getString("post_description");
+				string postCat = postRes->getString("category");
+				float postPrice = postRes->getDouble("price");
 
 				cout << "\n\nOrder ID: " << orderId << endl;
 				cout << "Buyer: " << buyerName << endl;
 				cout << "Post ID: " << postId << endl;
+				cout << "Price: " << postPrice << endl;
+				cout << "Category: " << postCat << endl;
 				cout << "Post Title: \n" << postTitle << endl;
 				cout << "Post Description: \n" << postDescription << endl;
 				cout << "Order Status: " << orderStatus << endl;
@@ -703,10 +729,14 @@ void Seller::displayRejectedOrders() {
 			if (postRes->next()) {
 				string postTitle = postRes->getString("post_title");
 				string postDescription = postRes->getString("post_description");
+				string postCat = postRes->getString("category");
+				float postPrice = postRes->getDouble("price");
 
 				cout << "\n\nOrder ID: " << orderId << endl;
 				cout << "Buyer: " << buyerName << endl;
 				cout << "Post ID: " << postId << endl;
+				cout << "Price: " << postPrice << endl;
+				cout << "Category: " << postCat << endl;
 				cout << "Post Title: \n" << postTitle << endl;
 				cout << "Post Description: \n" << postDescription << endl;
 				cout << "Order Status: " << orderStatus << endl;
