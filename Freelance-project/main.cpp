@@ -33,7 +33,7 @@ int main() {
 			// Register new user
 			registration.registerUser();
 
-			cout << "Registered Successfully!" << endl;
+
 			system("pause");
 
 		}
@@ -50,20 +50,21 @@ int main() {
 				system("pause");
 			}
 			string role = login.getUserRole();
-			int userId = login.getSellerId();
+			int userId = login.getUserId();
+			float userCreds = login.getUserCreds();
 
 			if (userId) {
 				isLoggedIn = true;
 			}
 
 			if (role == "Buyer" && isLoggedIn) {
-				User* buyer = new Buyer(database, username, role, userId);
+				User* buyer = new Buyer(database, username, role, userId, userCreds);
 				buyer->displayDashboard();
 				buyer->logout();
 				delete buyer;
 			}
 			else if (role == "Seller" && isLoggedIn) {
-				User* seller = new Seller(database, username, role, userId);
+				User* seller = new Seller(database, username, role, userId, userCreds);
 				seller->displayDashboard();
 				seller->logout();
 				delete seller;

@@ -13,7 +13,7 @@ using namespace std;
 
 class Seller : public User {
 public:
-	Seller(Database& db, const string& username, const string& role, const int& userId);
+	Seller(Database& db, const string& username, const string& role, const int& userId, const float& userCred);
 	void displayDashboard() override;
 	void displayPosts() override;
 
@@ -35,11 +35,11 @@ public:
 };
 
 
-Seller::Seller(Database& db, const string& username, const string& role, const int& userId) : User(db, username, role, userId) {}
+Seller::Seller(Database& db, const string& username, const string& role, const int& userId, const float& userCred) : User(db, username, role, userId, userCred) {}
 
 void Seller::displayDashboard() {
 	cout << "Seller Dashboard\n" << endl;
-	cout << "Welcome, " << username << "!\n\n";
+	cout << "Welcome, " << username << "!\t\t\t\tCredits: " << creds << "\n\n";
 
 	while (true) {
 		int choice;
@@ -249,7 +249,7 @@ int Seller::countActiveOrders() {
 				}
 
 				// Fetch  Post details
-				sql::PreparedStatement* postStmt = database.prepareStatement(GET_ORDER_POST_DETAILS);
+				sql::PreparedStatement* postStmt = database.prepareStatement(GET_POST_DETAILS);
 				postStmt->setInt(1, postId);
 				sql::ResultSet* postRes = postStmt->executeQuery();
 
@@ -310,7 +310,7 @@ void Seller::displayActiveOrders() {
 				}
 
 				// Fetch  Post details
-				sql::PreparedStatement* postStmt = database.prepareStatement(GET_ORDER_POST_DETAILS);
+				sql::PreparedStatement* postStmt = database.prepareStatement(GET_POST_DETAILS);
 				postStmt->setInt(1, postId);
 				sql::ResultSet* postRes = postStmt->executeQuery();
 
@@ -393,7 +393,7 @@ void Seller::rejectOrders() {
 				}
 
 				// Fetch  Post details
-				sql::PreparedStatement* postStmt = database.prepareStatement(GET_ORDER_POST_DETAILS);
+				sql::PreparedStatement* postStmt = database.prepareStatement(GET_POST_DETAILS);
 				postStmt->setInt(1, postId);
 				sql::ResultSet* postRes = postStmt->executeQuery();
 
@@ -493,7 +493,7 @@ int Seller::countCompletedOrders() {
 			}
 
 			// Fetch  Post details
-			sql::PreparedStatement* postStmt = database.prepareStatement(GET_ORDER_POST_DETAILS);
+			sql::PreparedStatement* postStmt = database.prepareStatement(GET_POST_DETAILS);
 			postStmt->setInt(1, postId);
 			sql::ResultSet* postRes = postStmt->executeQuery();
 
@@ -564,7 +564,7 @@ void Seller::displayCompletedOrders() {
 			}
 
 			// Fetch  Post details
-			sql::PreparedStatement* postStmt = database.prepareStatement(GET_ORDER_POST_DETAILS);
+			sql::PreparedStatement* postStmt = database.prepareStatement(GET_POST_DETAILS);
 			postStmt->setInt(1, postId);
 			sql::ResultSet* postRes = postStmt->executeQuery();
 
@@ -647,7 +647,7 @@ int Seller::countRejectedOrders() {
 			}
 
 			// Fetch  Post details
-			sql::PreparedStatement* postStmt = database.prepareStatement(GET_ORDER_POST_DETAILS);
+			sql::PreparedStatement* postStmt = database.prepareStatement(GET_POST_DETAILS);
 			postStmt->setInt(1, postId);
 			sql::ResultSet* postRes = postStmt->executeQuery();
 
@@ -715,7 +715,7 @@ void Seller::displayRejectedOrders() {
 			}
 
 			// Fetch  Post details
-			sql::PreparedStatement* postStmt = database.prepareStatement(GET_ORDER_POST_DETAILS);
+			sql::PreparedStatement* postStmt = database.prepareStatement(GET_POST_DETAILS);
 			postStmt->setInt(1, postId);
 			sql::ResultSet* postRes = postStmt->executeQuery();
 

@@ -2,6 +2,7 @@
 #define BUYER_H
 
 #include <iostream>
+#include <iomanip>
 #include "constants.h"
 #include "Database.h"
 #include "User.h"
@@ -9,12 +10,17 @@
 
 class Buyer : public User {
 public:
-	Buyer(Database& db, const string& username, const string& role, const int& userId);
+	Buyer(Database& db, const string& username, const string& role, const int& userId, const float& userCreds);
 
 	void displayDashboard() override;
 	void displayPosts() override;
 
-	void placeOrder(const int& selectedPostId);
+	void placeOrder(int& selectedPostId);
+	bool processPayment(float& postPrice, int& selectedPostId);
+	float getUserCreds();
+	void updateBuyerCredits(double& newBuyerCreds);
+	float getSellerCredits(int& selectedPostId);
+	void updateSellerCredits(double& newSellerCreds, int& selectedPostId);
 	int countActiveOrders();
 	void displayActiveOrders();
 	int countCompletedOrders();
@@ -23,19 +29,20 @@ public:
 	void displayRejectedOrders();
 	string getUsernameById(int userId);
 	int getIdByUsername(string& username);
+	float getPostPrice(int& selectedPostId);
 	bool isPostInActiveOrders(int postId);
 	void reset() override;
 	void logout() override;
 };
 
-Buyer::Buyer(Database& db, const string& username, const string& role, const int& userId) : User(db, username, role, userId) {}
+Buyer::Buyer(Database& db, const string& username, const string& role, const int& userId, const float& userCreds) : User(db, username, role, userId, userCreds) {}
 void Buyer::displayDashboard() {
 
 	while (true) {
 		int choice;
 
 		cout << "Buyer Dashboard" << endl;
-		cout << "\n\t\t\t\tWelcome, " << username << "!\n\n";
+		cout << "Welcome, " << username << "!\t\t\t\tCredits: " << creds << "\n\n";
 		cout << "1. Browse Services" << endl;
 		cout << "2. Show active orders (" << countActiveOrders() << ")" << endl;
 		cout << "3. Show completed orders (" << countCompletedOrders() << ")" << endl;
@@ -168,38 +175,61 @@ void  Buyer::displayPosts() {
 		cout << "Failed to retrieve services check category. Error: " << e.what() << endl;
 	}
 }
-void  Buyer::placeOrder(const int& selectedPostId) {
+void  Buyer::placeOrder(int& selectedPostId) {
 	try
 	{
+		float postPrice = getPostPrice(selectedPostId);
+
+		char choice;
+		cout << "Initiating Payment For This Post (Price: " << postPrice << "): (y/n)";
+		cin >> choice;
 		// First of all we will get the buyer id
-		int userId = getIdByUsername(username);
 
-		// Getting seller's id
-		sql::PreparedStatement* pstmt = nullptr;
-		pstmt = database.prepareStatement(GET_ORDER_POST_DETAILS);
-		pstmt->setInt(1, selectedPostId);
+		if (choice == 'y') {
 
-		sql::ResultSet* res;
-		res = pstmt->executeQuery();
+			bool paymentSuccessful = processPayment(postPrice, selectedPostId);
 
-		if (res->next()) {
-			int sellerId = res->getInt("seller_id");
+			if (paymentSuccessful) {
 
-			// Inserting data into the table
-			sql::PreparedStatement* orderStmt = nullptr;
-			orderStmt = database.prepareStatement(INSERT_ORDER);
-			orderStmt->setInt(1, userId);
-			orderStmt->setInt(2, sellerId);
-			orderStmt->setInt(3, selectedPostId);
-			orderStmt->setString(4, "Placed"); //Initial status
+				int userId = getIdByUsername(username);
 
-			orderStmt->execute();
+				// Getting seller's id
+				sql::PreparedStatement* pstmt = nullptr;
+				pstmt = database.prepareStatement(GET_POST_DETAILS);
+				pstmt->setInt(1, selectedPostId);
 
-			cout << "\n\n\t\t\t\t\t\tOrder placed successfully!" << endl;
-			delete orderStmt;
+				sql::ResultSet* res;
+				res = pstmt->executeQuery();
+
+				if (res->next()) {
+					int sellerId = res->getInt("seller_id");
+
+					// Inserting data into the table
+					sql::PreparedStatement* orderStmt = nullptr;
+					orderStmt = database.prepareStatement(INSERT_ORDER);
+					orderStmt->setInt(1, userId);
+					orderStmt->setInt(2, sellerId);
+					orderStmt->setInt(3, selectedPostId);
+					orderStmt->setString(4, "Placed"); //Initial status
+
+					orderStmt->execute();
+
+					cout << "\n\n\t\t\t\t\t\tOrder placed successfully!" << endl;
+					delete orderStmt;
+				}
+				delete res;
+				delete pstmt;
+			}
+			else {
+				cout << "Payment failed. Please try again later." << endl;
+			}
 		}
-		delete res;
-		delete pstmt;
+		else {
+			cout << "Order placement canceled." << endl;
+			cout << "Going back to the main menu" << endl;
+			system("pause");
+			return;
+		}
 
 	}
 	catch (sql::SQLException& e)
@@ -207,6 +237,137 @@ void  Buyer::placeOrder(const int& selectedPostId) {
 		cout << "Failed to place order. Error: " << e.what() << endl;
 	}
 }
+
+bool Buyer::processPayment(float& postPrice, int& selectedPostId) {
+	double buyerCredits = getUserCreds();
+
+	if (buyerCredits < postPrice) {
+		cout << "Insufficient Credits. Please add credits to your account." << endl;
+		return false;
+	}
+
+	double newBuyerCredits = buyerCredits - postPrice;
+	updateBuyerCredits(newBuyerCredits);
+
+	// For seller's credits
+	double sellerCredits = getSellerCredits(selectedPostId);
+
+	double newSellerCredits = sellerCredits + postPrice;
+	updateSellerCredits(newSellerCredits, selectedPostId);
+
+	cout << "Payment Successful!" << endl;
+	cout << "Buyer's updated credits: " << fixed << setprecision(2) << newBuyerCredits << endl;
+	cout << "Seller's updated credits: " << fixed << setprecision(2) << newSellerCredits << endl;
+	return true;
+}
+
+float Buyer::getUserCreds() {
+	try
+	{
+		sql::PreparedStatement* pstmt = database.prepareStatement(GET_USER_CREDS);
+		pstmt->setInt(1, userId);
+
+		sql::ResultSet* res;
+		res = pstmt->executeQuery();
+
+		if (res->next()) {
+			float BuyerCreds = res->getDouble("credits");
+
+			return BuyerCreds;
+		}
+	}
+	catch (sql::SQLException& e)
+	{
+		cout << "Couldn't Get Credits. Error: " << e.what() << endl;
+		return 0;
+	}
+}
+
+void Buyer::updateBuyerCredits(double& newBuyerCredits) {
+	double updateCreds = newBuyerCredits;
+	try
+	{
+		sql::PreparedStatement* pstmt = database.prepareStatement(UPDATE_USER_CREDS);
+		pstmt->setDouble(1, updateCreds);
+		pstmt->setInt(2, userId);
+
+		pstmt->executeUpdate();
+	}
+	catch (sql::SQLException& e)
+	{
+		cout << "Couldn't Update Credits. Error: " << e.what() << endl;
+		return;
+	}
+}
+
+float Buyer::getSellerCredits(int& selectedPostId) {
+	int sellerId;
+	float sellerCreds;
+	try
+	{
+
+		sql::PreparedStatement* postStmt = database.prepareStatement(GET_POST_DETAILS);
+		postStmt->setInt(1, selectedPostId);
+
+		sql::ResultSet* postRes;
+		postRes = postStmt->executeQuery();
+
+		while (postRes->next()) {
+			sellerId = postRes->getInt("seller_id");
+
+			sql::PreparedStatement* pstmt = database.prepareStatement(GET_USER_CREDS);
+			pstmt->setInt(1, sellerId);
+
+			sql::ResultSet* res;
+			res = pstmt->executeQuery();
+
+			if (res->next()) {
+				sellerCreds = res->getDouble("credits");
+			}
+
+			return sellerCreds;
+
+		}
+	}
+	catch (sql::SQLException& e)
+	{
+		cout << "Couldn't Get Credits. Error: " << e.what() << endl;
+		return 0;
+	}
+}
+
+void Buyer::updateSellerCredits(double& newSellerCredits, int& selectedPostId) {
+	int sellerId;
+	double updateCreds = newSellerCredits;
+	try
+	{
+
+		sql::PreparedStatement* postStmt = database.prepareStatement(GET_POST_DETAILS);
+		postStmt->setInt(1, selectedPostId);
+
+		sql::ResultSet* postRes;
+		postRes = postStmt->executeQuery();
+
+		while (postRes->next()) {
+			sellerId = postRes->getInt("seller_id");
+
+			sql::PreparedStatement* pstmt = database.prepareStatement(UPDATE_USER_CREDS);
+			pstmt->setDouble(1, updateCreds);
+			pstmt->setInt(2, sellerId);
+
+			int rowsUpdated = pstmt->executeUpdate();
+
+			delete pstmt;
+
+		}
+	}
+	catch (sql::SQLException& e)
+	{
+		cout << "Couldn't Update Credits. Error: " << e.what() << endl;
+		return;
+	}
+}
+
 int  Buyer::countActiveOrders() {
 	int activeOrders = 0;
 
@@ -239,7 +400,7 @@ int  Buyer::countActiveOrders() {
 			}
 
 			// Fetching Post Details
-			sql::PreparedStatement* postStmt = database.prepareStatement(GET_ORDER_POST_DETAILS);
+			sql::PreparedStatement* postStmt = database.prepareStatement(GET_POST_DETAILS);
 			postStmt->setInt(1, postId);
 			sql::ResultSet* postRes = postStmt->executeQuery();
 
@@ -309,7 +470,7 @@ void  Buyer::displayActiveOrders() {
 			activeOrderFound = true;
 
 			// Fetching Post Details
-			sql::PreparedStatement* postStmt = database.prepareStatement(GET_ORDER_POST_DETAILS);
+			sql::PreparedStatement* postStmt = database.prepareStatement(GET_POST_DETAILS);
 			postStmt->setInt(1, postId);
 			sql::ResultSet* postRes = postStmt->executeQuery();
 
@@ -400,7 +561,7 @@ int  Buyer::countCompletedOrders() {
 				delete pstmt;
 			}
 			// Fetch  Post details
-			sql::PreparedStatement* postStmt = database.prepareStatement(GET_ORDER_POST_DETAILS);
+			sql::PreparedStatement* postStmt = database.prepareStatement(GET_POST_DETAILS);
 			postStmt->setInt(1, postId);
 			sql::ResultSet* postRes = postStmt->executeQuery();
 
@@ -470,7 +631,7 @@ void  Buyer::displayCompletedOrders() {
 				delete pstmt;
 			}
 			// Fetch  Post details
-			sql::PreparedStatement* postStmt = database.prepareStatement(GET_ORDER_POST_DETAILS);
+			sql::PreparedStatement* postStmt = database.prepareStatement(GET_POST_DETAILS);
 			postStmt->setInt(1, postId);
 			sql::ResultSet* postRes = postStmt->executeQuery();
 
@@ -555,7 +716,7 @@ int  Buyer::countRejectedOrders() {
 				delete pstmt;
 			}
 			// Fetch  Post details
-			sql::PreparedStatement* postStmt = database.prepareStatement(GET_ORDER_POST_DETAILS);
+			sql::PreparedStatement* postStmt = database.prepareStatement(GET_POST_DETAILS);
 			postStmt->setInt(1, postId);
 			sql::ResultSet* postRes = postStmt->executeQuery();
 
@@ -638,7 +799,7 @@ void  Buyer::displayRejectedOrders() {
 				delete pstmt;
 			}
 			// Fetch  Post details
-			sql::PreparedStatement* postStmt = database.prepareStatement(GET_ORDER_POST_DETAILS);
+			sql::PreparedStatement* postStmt = database.prepareStatement(GET_POST_DETAILS);
 			postStmt->setInt(1, postId);
 			sql::ResultSet* postRes = postStmt->executeQuery();
 
@@ -775,6 +936,31 @@ int  Buyer::getIdByUsername(string& username) {
 		cout << "Failed to get User Name. Error: " << e.what() << endl;
 	}
 	return 404;
+}
+
+float Buyer::getPostPrice(int& selectedPostId) {
+	float postPrice;
+	try
+	{
+		sql::PreparedStatement* pstmt = database.prepareStatement("SELECT price FROM posts WHERE post_id = ?");
+		pstmt->setDouble(1, selectedPostId);
+
+		sql::ResultSet* res;
+		res = pstmt->executeQuery();
+
+		if (res->next()) {
+			postPrice = res->getDouble("price");
+
+			delete res;
+			delete pstmt;
+		}
+		return postPrice;
+	}
+	catch (sql::SQLException& e)
+	{
+		cout << "Could not get post price. Error: " << e.what() << endl;
+		return 404;
+	}
 }
 
 bool  Buyer::isPostInActiveOrders(int postId) {

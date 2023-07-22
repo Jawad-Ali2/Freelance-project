@@ -48,6 +48,7 @@ bool Registration::isValidRole(const string& role) {
 	return (role == "buyer" || role == "seller");
 }
 void Registration::registerUser() {
+	float creds = 10000;
 	string username;
 	string email;
 	string password;
@@ -57,24 +58,29 @@ void Registration::registerUser() {
 	cout << "Registration Form" << endl;
 	cout << "Username: "; cin >> username;
 	cin.ignore();
-	cout << "Email: "; cin >> email;
-	cout << "Password: "; cin >> password;
-	cout << "Select your role: (buyer/seller)"; cin >> role;
 
-	// validation
+	cout << "Email: "; cin >> email;
+
 	if (!isValidEmail(email)) {
 		cout << "Invalid email format. Please enter a valid email address." << endl;
 		return;
 	}
 
+	cout << "Password: "; cin >> password;
+
 	if (!isStrongPassword(password)) {
 		cout << "Weak Password. Please choose a stronger password." << endl;
 		return;
 	}
+	cout << "Select your role: (buyer/seller)"; cin >> role;
 
 	if (!isValidRole(role)) {
 		cout << "Invalid role. Please choose either 'buyer' or 'seller'." << endl;
 		return;
+	}
+
+	if (role == "seller") {
+		creds = 0;
 	}
 
 	try
@@ -89,13 +95,21 @@ void Registration::registerUser() {
 		pstmt->setString(1, username);
 		pstmt->setString(2, email);
 		pstmt->setString(3, password);
-		pstmt->setString(4, role);
+		pstmt->setDouble(4, creds);
+		pstmt->setString(5, role);
 
 		// Executing the insert statement
 		pstmt->execute();
 
 		//delete stmt;
 		delete pstmt;
+
+		if (role == "seller") {
+			cout << "Registered Successfully!" << endl;
+		}
+		else {
+			cout << "Registered Successfully! You've been given 10000 credits." << endl;
+		}
 	}
 	catch (sql::SQLException& e) {
 		std::cout << "User registration failed. Error: " << e.what() << std::endl;

@@ -13,6 +13,7 @@ class Login {
 private:
 	string loggedInUsername;
 	int userId;
+	float userCreds;
 	Database& database;
 
 public:
@@ -20,7 +21,8 @@ public:
 	bool loginUser(const string& username, const string& password);
 	void setLoggedInUsername(const string& username);
 	string getUserRole();
-	int getSellerId();
+	int getUserId();
+	float getUserCreds();
 };
 
 Login::Login(Database& db) : database(db) {};
@@ -90,6 +92,8 @@ string Login::getUserRole() {
 			// When role is fetched we simply equal userId to the id role relates to
 			userId = res->getInt("id");
 
+			userCreds = res->getDouble("credits");
+
 			delete res;
 			delete pstmt;
 			return role;
@@ -105,8 +109,12 @@ string Login::getUserRole() {
 	return "unknown";
 }
 
-int Login::getSellerId() {
+int Login::getUserId() {
 	return userId;
+}
+
+float Login::getUserCreds() {
+	return userCreds;
 }
 
 #endif

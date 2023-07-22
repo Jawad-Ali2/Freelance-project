@@ -18,21 +18,23 @@ const string GET_ORDER_ID = "SELECT order_id FROM orders WHERE post_id = ?";
 const string CURRENT_ORDER_STATUS = "SELECT order_status FROM orders WHERE post_id = ?";
 
 const string LOGIN_QUERY = "SELECT * FROM users WHERE username = ? AND password = ?";
-const string REGISTER_QUERY = "INSERT INTO users (username, email, password, role) VALUES (?, ?, ?, ?)";
-const string GET_USER_ROLE = "SELECT role, id FROM users WHERE username = ?";
+const string REGISTER_QUERY = "INSERT INTO users (username, email, password, credits, role) VALUES (?, ?, ?, ?, ?)";
+const string GET_USER_ROLE = "SELECT role, id, credits FROM users WHERE username = ?";
 const string CREATE_SELLER_POST = "INSERT INTO posts (seller_id, post_title, post_description, category, price) VALUES (?, ?, ?, ?, ?)";
 const string GET_ALL_POSTS = "SELECT post_id, post_title, post_description, category, price FROM posts WHERE seller_id = ?";
 const string GET_ACTIVE_ORDERS_SELLER = "SELECT * FROM orders WHERE seller_id = ?";
-const string GET_ORDER_POST_DETAILS = "SELECT * FROM posts WHERE post_id = ?";
+const string GET_POST_DETAILS = "SELECT * FROM posts WHERE post_id = ?";
 const string GET_SELLER_POSTS = "SELECT * FROM posts WHERE category = ?";
 const string INSERT_ORDER = "INSERT INTO orders (buyer_id, seller_id, post_id, order_status) VALUES (?, ?, ?, ?)";
 const string GET_ACTIVE_ORDERS_BUYER = "SELECT * FROM orders WHERE buyer_id = ?";
 const string GET_COMPLETED_ORDERS_SELLER = "SELECT post_id FROM orders WHERE order_status = ? AND seller_id = ?";
 const string GET_COMPLETED_ORDERS_SELLER_BUYER = "SELECT post_id FROM orders WHERE order_status = ? AND buyer_id = ?";
 const string GET_REJECTED_ORDERS = "SELECT post_id FROM orders WHERE order_status = ? AND seller_id = ?";
+const string GET_USER_CREDS = "SELECT credits FROM users WHERE id = ?";
 
 const string UPDATE_ORDER_STATUS = "UPDATE orders SET order_status = ? WHERE post_id = ?";
-//const string UPDATE_POST_REJECTION_FROM_ORDERS = "UPDATE orders SET order_status = ? WHERE buyer_id = ? AND post_id = ?";
+const string UPDATE_USER_CREDS = "UPDATE users SET credits = ? WHERE id = ?";
+
 const string DELETE_REJECTED_ORDERS = "DELETE FROM orders WHERE order_id = ? AND order_status = 'Rejected'";
 const string DELETE_ALL_POSTS = "DELETE FROM posts where seller_id = ?";
 const string DELETE_ONE_POST = "DELETE FROM posts WHERE seller_id=? AND post_id=?";
