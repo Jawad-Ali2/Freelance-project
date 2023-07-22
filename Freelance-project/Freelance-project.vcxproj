@@ -139,6 +139,7 @@
     <ClInclude Include="login.h" />
     <ClInclude Include="register.h" />
     <ClInclude Include="seller.h" />
+    <ClInclude Include="User.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

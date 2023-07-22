@@ -57,12 +57,16 @@ int main() {
 			}
 
 			if (role == "Buyer" && isLoggedIn) {
-				Buyer buyer(database, username, role, userId);
-				buyer.displayBuyerDashboard();
+				User* buyer = new Buyer(database, username, role, userId);
+				buyer->displayDashboard();
+				buyer->logout();
+				delete buyer;
 			}
 			else if (role == "Seller" && isLoggedIn) {
-				Seller seller(database, username, role, userId);
-				seller.displaySellerDashboard();
+				User* seller = new Seller(database, username, role, userId);
+				seller->displayDashboard();
+				seller->logout();
+				delete seller;
 			}
 		}
 		else if (choice == 3)

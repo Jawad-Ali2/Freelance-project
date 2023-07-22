@@ -13,6 +13,7 @@ private:
 	sql::mysql::MySQL_Driver* driver;
 	sql::Connection* connection;
 public:
+	Database() = default;
 	Database(const string& host, const string& user, const string& password, const string& database);
 	~Database();
 

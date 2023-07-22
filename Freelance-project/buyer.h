@@ -4,21 +4,18 @@
 #include <iostream>
 #include "constants.h"
 #include "Database.h"
+#include "User.h"
 #include <cppconn/prepared_statement.h>
 
-class Buyer {
-private:
-	int buyerId;
-	string role;
-	Database& database;
-	string username;
+class Buyer : public User {
 public:
-	Buyer(Database& db, const string& username, const string& role, const int& buyerId);
+	Buyer(Database& db, const string& username, const string& role, const int& userId);
 
-	void displayBuyerDashboard();
-	void displaySellerPosts();
+	void displayDashboard() override;
+	void displayPosts() override;
+
 	void placeOrder(const int& selectedPostId);
-	int activeOrdersCount();
+	int countActiveOrders();
 	void displayActiveOrders();
 	int countCompletedOrders();
 	void displayCompletedOrders();
@@ -27,15 +24,12 @@ public:
 	string getUsernameById(int userId);
 	int getIdByUsername(string& username);
 	bool isPostInActiveOrders(int postId);
-	void reset();
+	void reset() override;
+	void logout() override;
 };
 
-Buyer::Buyer(Database& db, const string& username, const string& role, const int& buyerId) : database(db) {
-	this->username = username;
-	this->role = role;
-	this->buyerId = buyerId;
-}
-void Buyer::displayBuyerDashboard() {
+Buyer::Buyer(Database& db, const string& username, const string& role, const int& userId) : User(db, username, role, userId) {}
+void Buyer::displayDashboard() {
 
 	while (true) {
 		int choice;
@@ -43,7 +37,7 @@ void Buyer::displayBuyerDashboard() {
 		cout << "Buyer Dashboard" << endl;
 		cout << "\n\t\t\t\tWelcome, " << username << "!\n\n";
 		cout << "1. Browse Services" << endl;
-		cout << "2. Show active orders (" << activeOrdersCount() << ")" << endl;
+		cout << "2. Show active orders (" << countActiveOrders() << ")" << endl;
 		cout << "3. Show completed orders (" << countCompletedOrders() << ")" << endl;
 		cout << "4. Show rejected orders (" << countRejectedOrders() << ")" << endl;
 		cout << "5. Display profile" << endl;
@@ -51,7 +45,7 @@ void Buyer::displayBuyerDashboard() {
 		cin >> choice;
 
 		if (choice == 1) {
-			displaySellerPosts();
+			displayPosts();
 		}
 		else if (choice == 2) {
 			system("cls");
@@ -77,7 +71,7 @@ void Buyer::displayBuyerDashboard() {
 		}
 	}
 }
-void  Buyer::displaySellerPosts() {
+void  Buyer::displayPosts() {
 	string selectedCategory;
 
 	cout << "Which Category You Want To Search For? "; cin >> selectedCategory;
@@ -114,7 +108,7 @@ void  Buyer::displaySellerPosts() {
 			cout << "\n\n\t\t\t\t<--------- Post ID: " << postId << " --------->" << endl;
 			cout << "\n\t\t\t\tSeller Name: " << sellerName << endl;
 			cout << "\n\t\t\t\tPrice: " << postPrice << endl;
-			cout << "\n\t\t\t\Category: " << postCat << endl;
+			cout << "\n\t\t\t\tCategory: " << postCat << endl;
 			cout << "\n\t\t\t\tTitle: " << title << endl;
 			cout << "\n\t\t\t\tDescription: \n\t\t\t\t" << description << endl;
 			cout << "\n\t\t\t\t-------------------------------------" << endl;
@@ -139,7 +133,7 @@ void  Buyer::displaySellerPosts() {
 			cout << "There are no services with given category. Please select different category." << endl;
 			system("pause");
 			system("cls");
-			displayBuyerDashboard();
+			displayDashboard();
 		}
 		delete res;
 		delete pstmt;
@@ -178,7 +172,7 @@ void  Buyer::placeOrder(const int& selectedPostId) {
 	try
 	{
 		// First of all we will get the buyer id
-		int buyerId = getIdByUsername(username);
+		int userId = getIdByUsername(username);
 
 		// Getting seller's id
 		sql::PreparedStatement* pstmt = nullptr;
@@ -194,7 +188,7 @@ void  Buyer::placeOrder(const int& selectedPostId) {
 			// Inserting data into the table
 			sql::PreparedStatement* orderStmt = nullptr;
 			orderStmt = database.prepareStatement(INSERT_ORDER);
-			orderStmt->setInt(1, buyerId);
+			orderStmt->setInt(1, userId);
 			orderStmt->setInt(2, sellerId);
 			orderStmt->setInt(3, selectedPostId);
 			orderStmt->setString(4, "Placed"); //Initial status
@@ -213,18 +207,18 @@ void  Buyer::placeOrder(const int& selectedPostId) {
 		cout << "Failed to place order. Error: " << e.what() << endl;
 	}
 }
-int  Buyer::activeOrdersCount() {
+int  Buyer::countActiveOrders() {
 	int activeOrders = 0;
 
 	try
 	{
 		// First of all we will get the buyer id
-		int buyerId = getIdByUsername(username);
+		int userId = getIdByUsername(username);
 
 		// Prepare SQL query to fetch active orders
 		sql::PreparedStatement* pstmt;
 		pstmt = database.prepareStatement(GET_ACTIVE_ORDERS_BUYER);
-		pstmt->setInt(1, buyerId);
+		pstmt->setInt(1, userId);
 
 		sql::ResultSet* res;
 		res = pstmt->executeQuery();
@@ -281,12 +275,12 @@ void  Buyer::displayActiveOrders() {
 	try
 	{
 		// First of all we will get the buyer id
-		int buyerId = getIdByUsername(username);
+		int userId = getIdByUsername(username);
 
 		// Prepare SQL query to fetch active orders
 		sql::PreparedStatement* pstmt;
 		pstmt = database.prepareStatement(GET_ACTIVE_ORDERS_BUYER);
-		pstmt->setInt(1, buyerId);
+		pstmt->setInt(1, userId);
 
 
 		sql::ResultSet* res;
@@ -373,7 +367,7 @@ int  Buyer::countCompletedOrders() {
 		// First we get order status and buyer name from this query
 		sql::PreparedStatement* preStmt = nullptr;
 		preStmt = database.prepareStatement(GET_ACTIVE_ORDERS_BUYER);
-		preStmt->setInt(1, buyerId);
+		preStmt->setInt(1, userId);
 
 		sql::ResultSet* preRes;
 		preRes = preStmt->executeQuery();
@@ -394,7 +388,7 @@ int  Buyer::countCompletedOrders() {
 			sql::PreparedStatement* pstmt = nullptr;
 			pstmt = database.prepareStatement(GET_COMPLETED_ORDERS_SELLER_BUYER);
 			pstmt->setString(1, orderStatus);
-			pstmt->setInt(2, buyerId);
+			pstmt->setInt(2, userId);
 
 			sql::ResultSet* res;
 			res = pstmt->executeQuery();
@@ -443,7 +437,7 @@ void  Buyer::displayCompletedOrders() {
 		// First we get order status and buyer name from this query
 		sql::PreparedStatement* preStmt = nullptr;
 		preStmt = database.prepareStatement(GET_ACTIVE_ORDERS_BUYER);
-		preStmt->setInt(1, buyerId);
+		preStmt->setInt(1, userId);
 
 		sql::ResultSet* preRes;
 		preRes = preStmt->executeQuery();
@@ -464,7 +458,7 @@ void  Buyer::displayCompletedOrders() {
 			sql::PreparedStatement* pstmt = nullptr;
 			pstmt = database.prepareStatement(GET_COMPLETED_ORDERS_SELLER_BUYER);
 			pstmt->setString(1, orderStatus);
-			pstmt->setInt(2, buyerId);
+			pstmt->setInt(2, userId);
 
 			sql::ResultSet* res;
 			res = pstmt->executeQuery();
@@ -528,7 +522,7 @@ int  Buyer::countRejectedOrders() {
 		// First we get order status and buyer name from this query
 		sql::PreparedStatement* preStmt = nullptr;
 		preStmt = database.prepareStatement(GET_ACTIVE_ORDERS_BUYER);
-		preStmt->setInt(1, buyerId);
+		preStmt->setInt(1, userId);
 
 		sql::ResultSet* preRes;
 		preRes = preStmt->executeQuery();
@@ -549,7 +543,7 @@ int  Buyer::countRejectedOrders() {
 			sql::PreparedStatement* pstmt = nullptr;
 			pstmt = database.prepareStatement(GET_COMPLETED_ORDERS_SELLER_BUYER);
 			pstmt->setString(1, orderStatus);
-			pstmt->setInt(2, buyerId);
+			pstmt->setInt(2, userId);
 
 			sql::ResultSet* res;
 			res = pstmt->executeQuery();
@@ -608,7 +602,7 @@ void  Buyer::displayRejectedOrders() {
 		// First we get order status and buyer name from this query
 		sql::PreparedStatement* preStmt = nullptr;
 		preStmt = database.prepareStatement(GET_ACTIVE_ORDERS_BUYER);
-		preStmt->setInt(1, buyerId);
+		preStmt->setInt(1, userId);
 
 		sql::ResultSet* preRes;
 		preRes = preStmt->executeQuery();
@@ -632,7 +626,7 @@ void  Buyer::displayRejectedOrders() {
 			sql::PreparedStatement* pstmt = nullptr;
 			pstmt = database.prepareStatement(GET_COMPLETED_ORDERS_SELLER_BUYER);
 			pstmt->setString(1, orderStatus);
-			pstmt->setInt(2, buyerId);
+			pstmt->setInt(2, userId);
 
 			sql::ResultSet* res;
 			res = pstmt->executeQuery();
@@ -788,7 +782,7 @@ bool  Buyer::isPostInActiveOrders(int postId) {
 	{
 		sql::PreparedStatement* pstmt = nullptr;
 		pstmt = database.prepareStatement(CHECK_POST_IN_ACTIVE_ORDERS);
-		pstmt->setInt(1, buyerId);
+		pstmt->setInt(1, userId);
 		pstmt->setInt(2, postId);
 
 		sql::ResultSet* res;
@@ -808,9 +802,14 @@ bool  Buyer::isPostInActiveOrders(int postId) {
 	return false;
 }
 void  Buyer::reset() {
-	int buyerId = 0;
+	int userId = 0;
 	string role = "";
 	string username = "";
+	isLoggedIn = false;
+}
+
+void Buyer::logout() {
+	isLoggedIn = false;
 }
 
 

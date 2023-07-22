@@ -6,22 +6,19 @@
 #include "login.h"
 #include "constants.h"
 #include "Database.h"
+#include "User.h"
 #include <cppconn/prepared_statement.h>
 
 using namespace std;
 
-class Seller {
-private:
-	int sellerId;
-	string role;
-	Database& database;
-	string username;
+class Seller : public User {
 public:
-	Seller(Database& db, const string& username, const string& role, const int& sellerId);
-	void displaySellerDashboard();
-	void addPost(const int& sellerId);
+	Seller(Database& db, const string& username, const string& role, const int& userId);
+	void displayDashboard() override;
+	void displayPosts() override;
+
+	void addPost(const int& userId);
 	int countPosts();
-	void displayPosts();
 	int countActiveOrders();
 	void displayActiveOrders();
 	void rejectOrders();
@@ -31,19 +28,16 @@ public:
 	void displayRejectedOrders();
 	string getUsernameById(int userId);
 	void changeOrderStatus(int postId);
-	void deletePosts(const int& sellerId);
+	void deletePosts(const int& userId);
 
-	void reset();
+	void reset() override;
+	void logout() override;
 };
 
 
-Seller::Seller(Database& db, const string& username, const string& role, const int& sellerId) : database(db) {
-	this->username = username;
-	this->role = role;
-	this->sellerId = sellerId;
-}
+Seller::Seller(Database& db, const string& username, const string& role, const int& userId) : User(db, username, role, userId) {}
 
-void Seller::displaySellerDashboard() {
+void Seller::displayDashboard() {
 	cout << "Seller Dashboard\n" << endl;
 	cout << "Welcome, " << username << "!\n\n";
 
@@ -59,7 +53,7 @@ void Seller::displaySellerDashboard() {
 		cin >> choice;
 
 		if (choice == 1) {
-			addPost(sellerId);
+			addPost(userId);
 		}
 		else if (choice == 2) {
 			displayPosts();
@@ -89,7 +83,7 @@ void Seller::displaySellerDashboard() {
 
 }
 
-void Seller::addPost(const int& sellerId) {
+void Seller::addPost(const int& userId) {
 
 	string postTitle;
 	string postDescription;
@@ -111,7 +105,7 @@ void Seller::addPost(const int& sellerId) {
 	{
 		sql::PreparedStatement* pstmt;
 		pstmt = database.prepareStatement(CREATE_SELLER_POST);
-		pstmt->setInt(1, sellerId);
+		pstmt->setInt(1, userId);
 		pstmt->setString(2, postTitle);
 		pstmt->setString(3, postDescription);
 		pstmt->setString(4, category);
@@ -135,7 +129,7 @@ int Seller::countPosts() {
 		sql::PreparedStatement* pstmt;
 		// Get all the posts
 		pstmt = database.prepareStatement(GET_ALL_POSTS);
-		pstmt->setInt(1, sellerId); // of the seller with id
+		pstmt->setInt(1, userId); // of the seller with id
 
 		sql::ResultSet* res;
 		res = pstmt->executeQuery();
@@ -165,7 +159,7 @@ void Seller::displayPosts() {
 		sql::PreparedStatement* pstmt;
 		// Get all the posts
 		pstmt = database.prepareStatement(GET_ALL_POSTS);
-		pstmt->setInt(1, sellerId); // of the seller with id
+		pstmt->setInt(1, userId); // of the seller with id
 
 		sql::ResultSet* res;
 		res = pstmt->executeQuery();
@@ -199,7 +193,7 @@ void Seller::displayPosts() {
 			cin >> choice;
 
 			if (choice == '1') {
-				deletePosts(sellerId);
+				deletePosts(userId);
 			}
 			else if (choice == '2') {
 				system("cls");
@@ -232,7 +226,7 @@ int Seller::countActiveOrders() {
 		sql::PreparedStatement* pstmt;
 		// Get Active_orders from the database based on the id
 		pstmt = database.prepareStatement(GET_ACTIVE_ORDERS_SELLER);
-		pstmt->setInt(1, sellerId); // Provides the id of the user
+		pstmt->setInt(1, userId); // Provides the id of the user
 
 		sql::ResultSet* res;
 		res = pstmt->executeQuery();
@@ -291,7 +285,7 @@ void Seller::displayActiveOrders() {
 		sql::PreparedStatement* pstmt;
 		// Get Active_orders from the database based on the id
 		pstmt = database.prepareStatement(GET_ACTIVE_ORDERS_SELLER);
-		pstmt->setInt(1, sellerId); // Provides the id of the user
+		pstmt->setInt(1, userId); // Provides the id of the user
 
 		sql::ResultSet* res;
 		res = pstmt->executeQuery();
@@ -353,7 +347,7 @@ void Seller::displayActiveOrders() {
 				rejectOrders();
 			}
 			else {
-				displaySellerDashboard();
+				displayDashboard();
 			}
 
 		}
@@ -376,7 +370,7 @@ void Seller::rejectOrders() {
 	{
 		sql::PreparedStatement* pstmt = nullptr;
 		pstmt = database.prepareStatement(GET_ACTIVE_ORDERS_SELLER);
-		pstmt->setInt(1, sellerId);
+		pstmt->setInt(1, userId);
 
 		sql::ResultSet* res;
 		res = pstmt->executeQuery();
@@ -395,7 +389,7 @@ void Seller::rejectOrders() {
 				if (orderStatus != "Placed") {
 					cout << "You can only reject Pending orders!" << endl;
 					system("pause");
-					displaySellerDashboard();
+					displayDashboard();
 				}
 
 				// Fetch  Post details
@@ -467,7 +461,7 @@ int Seller::countCompletedOrders() {
 		// First we get order status and buyer name from this query
 		sql::PreparedStatement* preStmt = nullptr;
 		preStmt = database.prepareStatement(GET_ACTIVE_ORDERS_SELLER);
-		preStmt->setInt(1, sellerId);
+		preStmt->setInt(1, userId);
 
 		sql::ResultSet* preRes;
 		preRes = preStmt->executeQuery();
@@ -486,7 +480,7 @@ int Seller::countCompletedOrders() {
 			sql::PreparedStatement* pstmt = nullptr;
 			pstmt = database.prepareStatement(GET_COMPLETED_ORDERS_SELLER);
 			pstmt->setString(1, orderStatus);
-			pstmt->setInt(2, sellerId);
+			pstmt->setInt(2, userId);
 
 			sql::ResultSet* res;
 			res = pstmt->executeQuery();
@@ -538,7 +532,7 @@ void Seller::displayCompletedOrders() {
 		// First we get order status and buyer name from this query
 		sql::PreparedStatement* preStmt = nullptr;
 		preStmt = database.prepareStatement(GET_ACTIVE_ORDERS_SELLER);
-		preStmt->setInt(1, sellerId);
+		preStmt->setInt(1, userId);
 
 		sql::ResultSet* preRes;
 		preRes = preStmt->executeQuery();
@@ -557,7 +551,7 @@ void Seller::displayCompletedOrders() {
 			sql::PreparedStatement* pstmt = nullptr;
 			pstmt = database.prepareStatement(GET_COMPLETED_ORDERS_SELLER);
 			pstmt->setString(1, orderStatus);
-			pstmt->setInt(2, sellerId);
+			pstmt->setInt(2, userId);
 
 			sql::ResultSet* res;
 			res = pstmt->executeQuery();
@@ -621,7 +615,7 @@ int Seller::countRejectedOrders() {
 		// First we get order status and buyer name from this query
 		sql::PreparedStatement* preStmt = nullptr;
 		preStmt = database.prepareStatement(GET_ACTIVE_ORDERS_SELLER);
-		preStmt->setInt(1, sellerId);
+		preStmt->setInt(1, userId);
 
 		sql::ResultSet* preRes;
 		preRes = preStmt->executeQuery();
@@ -640,7 +634,7 @@ int Seller::countRejectedOrders() {
 			sql::PreparedStatement* pstmt = nullptr;
 			pstmt = database.prepareStatement(GET_COMPLETED_ORDERS_SELLER);
 			pstmt->setString(1, orderStatus);
-			pstmt->setInt(2, sellerId);
+			pstmt->setInt(2, userId);
 
 			sql::ResultSet* res;
 			res = pstmt->executeQuery();
@@ -689,7 +683,7 @@ void Seller::displayRejectedOrders() {
 		// First we get order status and buyer name from this query
 		sql::PreparedStatement* preStmt = nullptr;
 		preStmt = database.prepareStatement(GET_ACTIVE_ORDERS_SELLER);
-		preStmt->setInt(1, sellerId);
+		preStmt->setInt(1, userId);
 
 		sql::ResultSet* preRes;
 		preRes = preStmt->executeQuery();
@@ -708,7 +702,7 @@ void Seller::displayRejectedOrders() {
 			sql::PreparedStatement* pstmt = nullptr;
 			pstmt = database.prepareStatement(GET_COMPLETED_ORDERS_SELLER);
 			pstmt->setString(1, orderStatus);
-			pstmt->setInt(2, sellerId);
+			pstmt->setInt(2, userId);
 
 			sql::ResultSet* res;
 			res = pstmt->executeQuery();
@@ -815,7 +809,7 @@ void Seller::changeOrderStatus(int postId) {
 			cout << "Order with post id '" << postId << "' does not exists" << endl;
 			system("pause");
 			system("cls");
-			displaySellerDashboard();
+			displayDashboard();
 		}
 
 		sql::PreparedStatement* pstmt = nullptr;
@@ -842,7 +836,7 @@ void Seller::changeOrderStatus(int postId) {
 			cout << "Status is already '" << currentOrderStatus << "' cannot update it." << endl;
 			system("pause");
 			system("cls");
-			displaySellerDashboard();
+			displayDashboard();
 		}
 
 		cout << "Current order status is set to: " << "'" << currentOrderStatus << "'" << endl;
@@ -864,7 +858,7 @@ void Seller::changeOrderStatus(int postId) {
 			cout << "Action altered, returning back to the main menu" << endl;
 			system("pause");
 			system("cls");
-			displaySellerDashboard();
+			displayDashboard();
 		}
 	}
 	catch (sql::SQLException& e)
@@ -876,7 +870,7 @@ void Seller::changeOrderStatus(int postId) {
 
 // Done by Noraiz
 
-void Seller::deletePosts(const int& sellerId) {
+void Seller::deletePosts(const int& userId) {
 	char choice;
 
 	cout << "1. Delete one post\n"
@@ -894,7 +888,7 @@ void Seller::deletePosts(const int& sellerId) {
 			// First delete that post from posts table
 			sql::PreparedStatement* pstmt = nullptr;
 			pstmt = database.prepareStatement(DELETE_POST_FROM_ORDERS);
-			pstmt->setInt(1, sellerId);
+			pstmt->setInt(1, userId);
 			pstmt->setString(2, postId);
 
 			pstmt->executeUpdate();
@@ -902,7 +896,7 @@ void Seller::deletePosts(const int& sellerId) {
 
 			// Then delete that post from orders table too
 			pstmt = database.prepareStatement(DELETE_ONE_POST);
-			pstmt->setInt(1, sellerId);
+			pstmt->setInt(1, userId);
 			pstmt->setString(2, postId);
 
 			pstmt->executeUpdate();
@@ -920,15 +914,20 @@ void Seller::deletePosts(const int& sellerId) {
 	else {
 		cout << "Invalid Input. Returning to main menu";
 		system("cls");
-		deletePosts(sellerId);
+		deletePosts(userId);
 	}
 }
 
 void Seller::reset() {
-	int sellerId = 0;
+	int userId = 0;
 	string role = "";
 	string username = "";
 }
+
+void Seller::logout() {
+	isLoggedIn = false;
+}
+
 
 #endif
 
