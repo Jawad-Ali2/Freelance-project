@@ -47,7 +47,6 @@ void Buyer::displayDashboard() {
 		cout << "2. Show active orders (" << countActiveOrders() << ")" << endl;
 		cout << "3. Show completed orders (" << countCompletedOrders() << ")" << endl;
 		cout << "4. Show rejected orders (" << countRejectedOrders() << ")" << endl;
-		cout << "5. Display profile" << endl;
 		cout << "5. Log out" << endl;
 		cin >> choice;
 
@@ -65,10 +64,8 @@ void Buyer::displayDashboard() {
 			displayRejectedOrders();
 		}
 		else if (choice == 5) {
-
-		}
-		else if (choice == 6) {
 			reset();
+			logout();
 			system("cls");
 			cout << "\n\n\n\t\t\t\t\tLogged Out Successfully!" << endl;
 
@@ -393,7 +390,6 @@ int  Buyer::countActiveOrders() {
 
 			if (orderStatus == "Completed" || orderStatus == "Rejected") {
 				if (!res->next()) {
-					system("pause");
 					break;
 				}
 				continue;
@@ -477,8 +473,8 @@ void  Buyer::displayActiveOrders() {
 			if (postRes->next()) {
 				string postTitle = postRes->getString("post_title");
 				string postDescription = postRes->getString("post_description");
-				string postCat = res->getString("category");
-				float postPrice = res->getDouble("price");
+				string postCat = postRes->getString("category");
+				float postPrice = postRes->getDouble("price");
 
 				cout << endl;
 				cout << "Order ID: " << orderId << endl;

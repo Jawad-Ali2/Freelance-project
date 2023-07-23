@@ -69,6 +69,7 @@ void Seller::displayDashboard() {
 		}
 		else if (choice == 6) {
 			reset();
+			logout();
 			system("cls");
 			cout << "\n\n\n\t\t\t\t\tLogged Out Successfully!" << endl;
 
@@ -134,13 +135,13 @@ int Seller::countPosts() {
 		sql::ResultSet* res;
 		res = pstmt->executeQuery();
 		if (res->next()) {
-			while (res->next()) {
+			do {
 				int postId = res->getInt("post_id");
 				string postTitle = res->getString("post_title");
 				string postDesc = res->getString("post_description");
 
 				postsCount++;
-			}
+			} while (res->next());
 
 			delete res;
 			delete pstmt;
@@ -166,7 +167,7 @@ void Seller::displayPosts() {
 		if (res->next()) {
 			cout << "Your Posts: \n" << endl;
 
-			while (res->next()) {
+			do {
 				int postId = res->getInt("post_id");
 				string postTitle = res->getString("post_title");
 				string postDesc = res->getString("post_description");
@@ -181,7 +182,7 @@ void Seller::displayPosts() {
 				cout << "Description: " << postDesc << endl;
 				cout << "-----------------------------------------" << endl;
 				cout << endl;
-			}
+			} while (res->next());
 
 			delete res;
 			delete pstmt;
