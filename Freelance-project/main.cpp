@@ -6,17 +6,20 @@
 #include "buyer.h"
 #include "seller.h"
 
-//this is master
+
 using namespace std;
 
 
 int main() {
+	bool isLoggedIn = false;
 	Database database(DB_HOST, DB_USERNAME, DB_PASSWORD, DB_NAME);
 	Registration registration(database);
 	Login login(database);
 
 
 	while (true) {
+		//system("cls");
+
 		int choice;
 		cout << "Welcome to Freelance Platform" << endl;
 		cout << "1. Register" << endl;
@@ -30,7 +33,7 @@ int main() {
 			// Register new user
 			registration.registerUser();
 
-			cout << "Registered Successfully!" << endl;
+
 			system("pause");
 
 		}
@@ -42,20 +45,34 @@ int main() {
 			cout << "Username: "; cin >> username;
 			cout << "Password: "; cin >> password;
 			if (login.loginUser(username, password)) {
+				system("cls");
 				cout << "Login successfully!" << endl;
 				login.setLoggedInUsername(username);
 				system("pause");
 			}
 			string role = login.getUserRole();
-			int sellerId = login.getSellerId();
-			system("cls");
-			if (role == "Buyer") {
-				Buyer buyer;
-				buyer.displayBuyerDashboard();
+			int userId = login.getUserId();
+			float userCreds = login.getUserCreds();
+
+			if (userId) {
+				isLoggedIn = true;
 			}
-			else if (role == "Seller") {
-				Seller seller(database, username, role, sellerId);
-				seller.displaySellerDashboard();
+
+			if (role == "Buyer" && isLoggedIn) {
+				User* buyer = new Buyer(database, username, role, userId, userCreds);
+				system("pause");
+				system("cls");
+				buyer->displayDashboard();
+				buyer->logout();
+				delete buyer;
+			}
+			else if (role == "Seller" && isLoggedIn) {
+				User* seller = new Seller(database, username, role, userId, userCreds);
+				system("pause");
+				system("cls");
+				seller->displayDashboard();
+				seller->logout();
+				delete seller;
 			}
 		}
 		else if (choice == 3)
