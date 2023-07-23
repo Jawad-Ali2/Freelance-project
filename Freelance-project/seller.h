@@ -53,18 +53,23 @@ void Seller::displayDashboard() {
 		cin >> choice;
 
 		if (choice == 1) {
+			system("cls");
 			addPost(userId);
 		}
 		else if (choice == 2) {
+			system("cls");
 			displayPosts();
 		}
 		else if (choice == 3) {
+			system("cls");
 			displayActiveOrders();
 		}
 		else if (choice == 4) {
+			system("cls");
 			displayCompletedOrders();
 		}
 		else if (choice == 5) {
+			system("cls");
 			displayRejectedOrders();
 		}
 		else if (choice == 6) {
@@ -75,6 +80,7 @@ void Seller::displayDashboard() {
 
 			cout << "\n\n\n\t\t\t\tGoing back to the main screen" << endl;
 			system("pause");
+			system("cls");
 			return;
 		}
 		else {
@@ -401,8 +407,8 @@ void Seller::rejectOrders() {
 				if (postRes->next()) {
 					string postTitle = postRes->getString("post_title");
 					string postDescription = postRes->getString("post_description");
-					string postCat = res->getString("category");
-					float postPrice = res->getDouble("price");
+					string postCat = postRes->getString("category");
+					float postPrice = postRes->getDouble("price");
 
 
 					//cout << "Buyer ID: " << buyerId << endl;
@@ -428,7 +434,7 @@ void Seller::rejectOrders() {
 					sql::PreparedStatement* rejStmt = nullptr;
 					rejStmt = database.prepareStatement(UPDATE_ORDER_STATUS);
 					rejStmt->setString(1, updateStatus);
-					rejStmt->setInt(2, postId);
+					rejStmt->setInt(2, orderId);
 					rejStmt->executeUpdate();
 
 					delete rejStmt;

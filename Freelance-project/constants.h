@@ -32,7 +32,7 @@ const string GET_COMPLETED_ORDERS_SELLER_BUYER = "SELECT post_id FROM orders WHE
 const string GET_REJECTED_ORDERS = "SELECT post_id FROM orders WHERE order_status = ? AND seller_id = ?";
 const string GET_USER_CREDS = "SELECT credits FROM users WHERE id = ?";
 
-const string UPDATE_ORDER_STATUS = "UPDATE orders SET order_status = ? WHERE post_id = ?";
+const string UPDATE_ORDER_STATUS = "UPDATE orders SET order_status = ? WHERE order_id = ?";
 const string UPDATE_USER_CREDS = "UPDATE users SET credits = ? WHERE id = ?";
 
 const string DELETE_REJECTED_ORDERS = "DELETE FROM orders WHERE order_id = ? AND order_status = 'Rejected'";

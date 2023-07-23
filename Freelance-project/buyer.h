@@ -51,6 +51,7 @@ void Buyer::displayDashboard() {
 		cin >> choice;
 
 		if (choice == 1) {
+			system("cls");
 			displayPosts();
 		}
 		else if (choice == 2) {
@@ -58,9 +59,11 @@ void Buyer::displayDashboard() {
 			displayActiveOrders();
 		}
 		else if (choice == 3) {
+			system("cls");
 			displayCompletedOrders();
 		}
 		else if (choice == 4) {
+			system("cls");
 			displayRejectedOrders();
 		}
 		else if (choice == 5) {
@@ -71,6 +74,7 @@ void Buyer::displayDashboard() {
 
 			cout << "\n\n\n\t\t\t\tGoing back to the main screen" << endl;
 			system("pause");
+			system("cls");
 			return;
 		}
 	}
@@ -636,7 +640,7 @@ void  Buyer::displayCompletedOrders() {
 				string postTitle = postRes->getString("post_title");
 				string postDescription = postRes->getString("post_description");
 				string category = postRes->getString("category");
-				float postPrice = res->getDouble("price");
+				float postPrice = postRes->getDouble("price");
 
 				cout << "\n\nOrder ID: " << orderId << endl;
 				cout << "Seller: " << sellerName << endl;
@@ -804,7 +808,7 @@ void  Buyer::displayRejectedOrders() {
 				string postTitle = postRes->getString("post_title");
 				string postDescription = postRes->getString("post_description");
 				string category = postRes->getString("category");
-				float postPrice = res->getDouble("price");
+				float postPrice = postRes->getDouble("price");
 
 				cout << "\n\nOrder ID: " << orderId << endl;
 				cout << "Seller: " << sellerName << endl;

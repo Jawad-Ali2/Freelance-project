@@ -45,6 +45,7 @@ int main() {
 			cout << "Username: "; cin >> username;
 			cout << "Password: "; cin >> password;
 			if (login.loginUser(username, password)) {
+				system("cls");
 				cout << "Login successfully!" << endl;
 				login.setLoggedInUsername(username);
 				system("pause");
@@ -59,12 +60,16 @@ int main() {
 
 			if (role == "Buyer" && isLoggedIn) {
 				User* buyer = new Buyer(database, username, role, userId, userCreds);
+				system("pause");
+				system("cls");
 				buyer->displayDashboard();
 				buyer->logout();
 				delete buyer;
 			}
 			else if (role == "Seller" && isLoggedIn) {
 				User* seller = new Seller(database, username, role, userId, userCreds);
+				system("pause");
+				system("cls");
 				seller->displayDashboard();
 				seller->logout();
 				delete seller;

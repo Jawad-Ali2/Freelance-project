@@ -36,6 +36,27 @@ Database:: ~Database() {
 	delete connection;
 }
 
+bool Database::connect(const string& host, const string& user, const string& password, const string& database) {
+	try {
+		// Initialize the MySQL driver
+		driver = sql::mysql::get_mysql_driver_instance();
+
+		// Connect to the database
+		connection = driver->connect(host, user, password);
+
+		// Set the current schema (database)
+		connection->setSchema(database);
+
+		// Return true if the connection is successful
+		return true;
+	}
+	catch (sql::SQLException& e) {
+		// If there is an error in the connection, catch the exception and print the error message
+		cout << "Failed to connect to the database. Error: " << e.what() << endl;
+		return false;
+	}
+}
+
 sql::PreparedStatement* Database::prepareStatement(const string& query) {
 	if (connection) {
 		return connection->prepareStatement(query);
